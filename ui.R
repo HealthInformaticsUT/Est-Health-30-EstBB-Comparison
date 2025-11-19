@@ -43,7 +43,7 @@ body <- shinydashboard::dashboardBody(
       }
       .center-img {
         display: block;
-        margin-left: auto;
+
         margin-right: auto;
       }
       .image-column {
@@ -70,6 +70,9 @@ body <- shinydashboard::dashboardBody(
       }
       .justified-text {
         text-align: justify;
+      }
+      .text-left {
+        text-align: left;
       }
       /* Active/Inactive States */
       .active { background-color: #ffffff !important; color: grey; }
@@ -452,7 +455,7 @@ body <- shinydashboard::dashboardBody(
             # Content Row: Displays Logos, Funding, and Contact images/info
             shiny::fluidRow(
               # --- Contact Information Column ---
-              shiny::column(width = 6, class = "text-justify",
+              shiny::column(width = 6, class = "text-left",
                             tags$h4(tags$b("Contact Information")),
                             tags$p("Maarja Pajusalu"),
                             tags$p("maarja.pajusalu@ut.ee"),
@@ -470,7 +473,8 @@ body <- shinydashboard::dashboardBody(
                                 target = "_blank", # Opens link in a new tab
                                 tags$b("Research Group of Health Informatics")
                               ),
-                            tags$img(src = "img/logos.png", width="300px")
+                            tags$p(""),
+                            tags$img(src = "img/logos.png", width="300px", class = "image-column")
               ),
 
               # --- Funding Sources Column ---
