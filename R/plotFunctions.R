@@ -26,71 +26,84 @@ forest2_parent2 <- function(data,
 # Use 0.4 to 0.5 inches per row for readability
 num_rows <- length(unique(df_filter$parent2_code))
 # Ensure a minimum height of 4 inches
-plot_height_inches <- max(4, num_rows * 0.5)
-#
+plot_height_inches <- max(2, num_rows * 0.25)
+
   plot1 <- ggplot(df_filter, aes(x = prevalence_diff, y = parent2_code_ordered)) +
-    annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf,
-             fill = color_data1, alpha = 0.05) +
-    annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = Inf,
-             fill = color_data2, alpha = 0.05) +
-    geom_vline(xintercept = log2(1.3), color = color_dotline, linetype = 3, alpha=0.9, size=0.7) +
-    geom_vline(xintercept = log2(1/1.3), color = color_dotline, linetype = 3, alpha=0.9, size=0.7) +
-    geom_vline(xintercept = 0, color = "grey") +
-    geom_errorbar(aes(xmin = ci_low, xmax = ci_high, color = gender_EN, alpha = sig),
-                  width = 0.2) +
-    geom_point_interactive(aes(
-      color = gender_EN,
-      fill = gender_EN,
-      alpha = sig,
-      data_id = prevalence_diff,
-      tooltip = paste0(
-        parent2_code, ", ", parent2_name_EN,
-        "\nGender: ", gender_EN,
-        "\nFold: ", round(fold_diff_reg, 2),
-        "\np: ", round(p_value, 3),
-        "\n",
-        "\nLog2 diff: ", round(prevalence_diff, 2),
-        " [", round(ci_low, 3), ", ", round(ci_high, 2), "]",
-        "\nDiff: ", round(fold_diff_nat, 2),
-        " [", round(fold_ci_low_nat, 3), ", ", round(fold_ci_high_nat, 3), "]",
-        "\n", parent2_name
-      )), shape = 21, size = 2.5) +
-    scale_color_manual(values = c("F" = color_female,
-                                  "M" = color_male,
-                                  "Both" = color_all), guide = "none") +
-    scale_fill_manual(values = c("F" = color_female,
-                                 "M" = color_male,
-                                 "Both" = color_all), guide = "none") +
-    scale_alpha_manual(values = c("nosig" = 0.2, "sig" = 1), guide = "none") +
-    scale_x_continuous("log2(prevalence ratio)") +
-    theme_minimal() +
-    labs(
-      title = paste0("Prevalence ratios by diagnosis and gender: <span style='color:",
-                     color_male, ";'>Male</span> <span style='color:",
-                     color_female, ";'>Female</span>"),
-      subtitle = paste("<span style='color:", color_data1, ";'>Prevalence higher in ",
-                       name1, " (blue)</span> or <span style='color: ",
-                       color_data2, ";'>prevalence higher in ", name2, " (orange)</span>"),
-      #x = "Prevalence Difference (log2)",
-      y = ""
-    ) +
-    facet_grid(rows = vars(parent2_label),
-               #cols = vars(gender_EN),
-               scales = "free_y",
-               space = "free_y", #"fixed",
-               labeller = labeller(parent2_label = label_value)) + #, gender_EN = label_value
-    theme(
-      plot.title = element_markdown(size = 12, face = "bold"),
-      plot.subtitle = element_markdown(size = 9),
-      axis.text.x = element_text(size = 9),
-      axis.title.x = element_text(size = 7),
-      strip.text = element_text(size = 9),
-      strip.text.x = element_text(size=9),
-      strip.text.y = element_text(size=9, angle = 0, hjust = 0),
-      strip.background = element_rect(fill = "#ededed", color="white", size = 0),
-      panel.spacing.y = unit(0, "cm"),
-      panel.spacing.x = unit(0.1, "cm")
-    )
+  annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf,
+           fill = color_data1, alpha = 0.05) +
+  annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = Inf,
+           fill = color_data2, alpha = 0.05) +
+
+  # Dotted lines remain correctly calculated in log2 space
+  geom_vline(xintercept = log2(1.3), color = color_dotline, linetype = 3, alpha=0.9, size=0.7) +
+  geom_vline(xintercept = log2(1/1.3), color = color_dotline, linetype = 3, alpha=0.9, size=0.7) +
+
+  # Center line remains at log2(1) = 0
+  geom_vline(xintercept = 0, color = "grey") +
+
+  geom_errorbar(aes(xmin = ci_low, xmax = ci_high, color = gender_EN, alpha = sig),
+                width = 0.2) +
+  geom_point_interactive(aes(
+    color = gender_EN,
+    fill = gender_EN,
+    alpha = sig,
+    data_id = prevalence_diff,
+    tooltip = paste0(
+      parent2_code, ", ", parent2_name_EN,
+      "\nGender: ", gender_EN,
+      "\nFold: ", round(fold_diff_reg, 2),
+      "\np: ", round(p_value, 3),
+      "\n",
+      "\nLog2 diff: ", round(prevalence_diff, 2),
+      " [", round(ci_low, 3), ", ", round(ci_high, 2), "]",
+      "\nDiff: ", round(fold_diff_nat, 2),
+      " [", round(fold_ci_low_nat, 3), ", ", round(fold_ci_high_nat, 3), "]",
+      "\n", parent2_name
+    )), shape = 21, size = 2.5) +
+  scale_color_manual(values = c("F" = color_female,
+                                "M" = color_male,
+                                "Both" = color_all), guide = "none") +
+  scale_fill_manual(values = c("F" = color_female,
+                               "M" = color_male,
+                               "Both" = color_all), guide = "none") +
+  scale_alpha_manual(values = c("nosig" = 0.2, "sig" = 1), guide = "none") +
+  scale_x_continuous(
+    "Prevalence Ratio (Fold Difference)",
+    # Breaks in log2 space (calculated as log2(0.25) to log2(4))
+    breaks = c(-2, -1, 0, 1, 2),
+    # Labels in natural fold space
+    labels = c("0.25", "0.5", "1", "2", "4"),
+    limits = c(-2.5,2.5)
+  ) +
+theme_minimal() +
+  labs(
+    title = paste0("<span style='color:", color_data1, ";'>Higher in ",
+                   name1, " (blue)</span> <---> <span style='color: ",
+                   color_data2, ";'>Higher in ", name2, " (orange) </span>"
+    ),
+    subtitle = paste("<span style='color: ", color_dotline, ";'>••• Fold difference 1.3x. </span>
+    <span style='color:", color_female, ";'>Female</span>
+      <span style='color:", color_male, ";'>Male</span>
+      <span style='color:", color_all, ";'>Both</span>"
+    ),
+    y = ""
+  ) +
+  facet_grid(rows = vars(parent2_label),
+             scales = "free_y",
+             space = "free_y",
+             labeller = labeller(parent2_label = label_value)) +
+  theme(
+    plot.title = element_markdown(size = 11, face = "bold"),
+    plot.subtitle = element_markdown(size = 9),
+    axis.text.x = element_text(size = 9),
+    axis.title.x = element_text(size = 9),
+    strip.text = element_text(size = 9),
+    strip.text.x = element_text(size=9),
+    strip.text.y = element_text(size=9, angle = 0, hjust = 0),
+    strip.background = element_rect(fill = "#ededed", color="white", size = 0),
+    panel.spacing.y = unit(0, "cm"),
+    panel.spacing.x = unit(0.1, "cm")
+  )
   girafe(ggobj = plot1,
          #width_svg = ,
          height_svg = plot_height_inches,

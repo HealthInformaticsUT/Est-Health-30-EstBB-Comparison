@@ -35,7 +35,12 @@ create_p_histogram_bb <- function(plot_data) {
 # --- Plot for p_death_bb ---
 create_p_death_bb <- function(plot_data) {
   p <- ggplot(aes(x = 2**p_vs_bb, y = 1, size = YLL2021norm, color = YLL2021norm,
-                  text = str_glue("{parent2_code}: {parent2_name_EN}")),
+                  text = paste0(
+                    parent2_code, ", ", parent2_name_EN,
+                    "\nFold: ", round(2**p_vs_bb, 2),
+                    "\np: ", round(p_vs_bb_p, 3),
+                    "\n"
+                  )),
               data = plot_data %>% arrange(YLL2021norm)) +
     geom_point(position = position_jitter(seed = 42)) +
     scale_size_continuous(range = c(0.3,4)) +
@@ -59,7 +64,12 @@ create_p_death_bb <- function(plot_data) {
 # --- Plot for p_disability_bb ---
 create_p_disability_bb <- function(plot_data) {
   p <- ggplot(aes(x = 2**p_vs_bb, y = 1, size = YLD2021norm, color = YLD2021norm,
-                  text = str_glue("{parent2_code}: {parent2_name_EN}")),
+                  text = paste0(
+    parent2_code, ", ", parent2_name_EN,
+    "\nFold: ", round(2**p_vs_bb, 2),
+    "\np: ", round(p_vs_bb_p, 3),
+    "\n"
+  )),
               data = plot_data %>% arrange(YLL2021norm)) +
     geom_point(position = position_jitter(seed = 42)) +
     scale_size_continuous(range = c(0.3,4)) +
@@ -107,7 +117,12 @@ create_p_histogram_bb1 <- function(plot_data) {
 
 create_p_death_bb1 <- function(plot_data) {
   p <- ggplot(aes(x = 2**p_vs_bb1, y = 1, size = YLL2021norm, color = YLL2021norm,
-                  text = str_glue("{parent2_code}: {parent2_name_EN}")),
+                  text = paste0(
+                    parent2_code, ", ", parent2_name_EN,
+                    "\nFold: ", round(2**p_vs_bb1, 2),
+                    "\np: ", round(p_vs_bb1_p, 3),
+                    "\n"
+                  )),
               data = plot_data %>% arrange(YLL2021norm)) +
 
     geom_point(position = position_jitter(seed = 42)) +
@@ -130,7 +145,12 @@ create_p_death_bb1 <- function(plot_data) {
 
 create_p_disability_bb1 <- function(plot_data) {
   p <- ggplot(aes(x = 2**p_vs_bb1, y = 1, size = YLD2021norm, color = YLD2021norm,
-                  text = str_glue("{parent2_code}: {parent2_name_EN}")),
+                  text = paste0(
+                    parent2_code, ", ", parent2_name_EN,
+                    "\nFold: ", round(2**p_vs_bb1, 2),
+                    "\np: ", round(p_vs_bb1_p, 3),
+                    "\n"
+                  )),
               data = plot_data %>% arrange(YLL2021norm)) +
     geom_point(position = position_jitter(seed = 42)) +
     scale_size_continuous(range = c(0.3, 4)) +
@@ -177,7 +197,12 @@ create_p_histogram_bb2 <- function(plot_data) {
 
 create_p_death_bb2 <- function(plot_data) {
   p <- ggplot(aes(x = 2**p_vs_bb2, y = 1, size = YLL2021norm, color = YLL2021norm,
-                  text = str_glue("{parent2_code}: {parent2_name_EN}")),
+                  text = paste0(
+                    parent2_code, ", ", parent2_name_EN,
+                    "\nFold: ", round(2**p_vs_bb2, 2),
+                    "\np: ", round(p_vs_bb2_p, 3),
+                    "\n"
+                  )),
               data = plot_data %>% arrange(YLL2021norm)) +
     geom_point(position = position_jitter(seed = 42)) +
     scale_size_continuous(range = c(0.3,4)) +
@@ -199,7 +224,12 @@ create_p_death_bb2 <- function(plot_data) {
 
 create_p_disability_bb2 <- function(plot_data) {
   p <- ggplot(aes(x = 2**p_vs_bb2, y = 1, size = YLD2021norm, color = YLD2021norm,
-                  text = str_glue("{parent2_code}: {parent2_name_EN}")),
+                  text = paste0(
+                    parent2_code, ", ", parent2_name_EN,
+                    "\nFold: ", round(2**p_vs_bb2, 2),
+                    "\np: ", round(p_vs_bb2_p, 3),
+                    "\n"
+                  )),
               data = plot_data %>% arrange(YLL2021norm)) +
     geom_point(position = position_jitter(seed = 42)) +
     scale_size_continuous(range = c(0.3,4)) +

@@ -68,7 +68,9 @@ body <- shinydashboard::dashboardBody(
       @media (max-width: 768px) {
         .image-column { margin-bottom: 15px !important; }
       }
-
+      .justified-text {
+        text-align: justify;
+      }
       /* Active/Inactive States */
       .active { background-color: #ffffff !important; color: grey; }
       .inactive { background-color: #f8f9fa !important; color: black; }
@@ -94,7 +96,7 @@ body <- shinydashboard::dashboardBody(
                           shiny::fluidRow(
                             shinydashboard::box(
                               width = 12,
-                              title = "PR Distribution Between Datasets + Burden",
+                              title = "Distribution of Prevalence Ratios Between Datasets + Burden",
                               solidHeader = TRUE,
                               status = "primary",
                               class = "no-margin-box",
@@ -132,7 +134,7 @@ body <- shinydashboard::dashboardBody(
                           shiny::fluidRow(
                             shinydashboard::box(
                               width = 12,
-                              title = "PR Distribution of Males vs Females Between Datasets",
+                              title = "Distribution of Prevalence Ratios in Males vs Females Between Datasets",
                               solidHeader = TRUE,
                               status = "primary",
                               class = "no-margin-box",
@@ -167,20 +169,20 @@ body <- shinydashboard::dashboardBody(
                           shiny::fluidRow(
                             shinydashboard::box(
                               width = 12,
-                              title = "PR Values by Gender per Diagnosis",
+                              title = "Values of Prevalence Ratios by Gender per Diagnosis",
                               solidHeader = TRUE,
                               status = "primary",
                               class = "no-margin-box",
 
                               # Controls
                               shiny::fluidRow(
-                                shiny::column(width = 3,
+                                shiny::column(width = 2,
                                               shiny::checkboxGroupInput("gender_filter", "Select genders:",
                                                                         choices = c("M", "N", "Both"),
                                                                         selected = c("M", "N"),
                                                                         inline = TRUE)
                                 ),
-                                shiny::column(width = 3,
+                                shiny::column(width = 2,
                                               shiny::selectInput("code_filter", label= "Diagnosis:",
                                                                  choices = c("I00-I99"), selected = c("I00-I99"), multiple=FALSE)
                                 ),
@@ -189,7 +191,7 @@ body <- shinydashboard::dashboardBody(
                                                                  min = 0, max = 10.0, value = c(0, 0.3), step = 0.1)
                                 ),
                                 shiny::column(width = 3,
-                                              shiny::sliderInput("fold_filter", "Fold diff (reg):",
+                                              shiny::sliderInput("fold_filter", "Fold diff:",
                                                                  min = 1, max = 10, value = c(1.3, 10), step = 0.1)
                                 )
                               ),
@@ -317,7 +319,7 @@ body <- shinydashboard::dashboardBody(
 
         shinydashboard::box(
           width = 12,
-          title = "Evaluating the Representativeness of the Estonian Biobank",
+          title = "Estonian Biobank vs General Population: Analysis of Diagnosis Prevalences",
           solidHeader = TRUE,
           status = "info",
           class = "no-margin-box",
@@ -329,28 +331,39 @@ body <- shinydashboard::dashboardBody(
                      tags$h3(tags$b("Abstract")),
                      tags$hr(),
 
-                     # WHY Section
-                     tags$h4(tags$b("WHY")),
-                     tags$p(
-                       "When publishing research, it is essential to critically assess whether the study sample is representative of the target population. This study evaluates the representativeness of the Estonian Biobank (EstBB) and its two recruitment waves relative to the general Estonian population, approximated by a 30% national reference dataset (EH30). To support generalizability and informed study design, we quantify systematic differences in disease prevalence and demographics, with additional consideration of disease burden using DALY metrics to contextualize the potential impact of over- or underrepresented conditions."
-                     ),
+                     # --- Start of Two-Column Layout ---
+                     shiny::fluidRow(
+                       # Column 1
+                       shiny::column(width = 6,
+                                     shiny::div(class = "text-justify",
+                                                # WHY Section
+                                                tags$h4(tags$b("WHY")),
+                                                tags$p(
+                                                  "When publishing research, it is essential to critically assess whether the study sample is representative of the target population. This study evaluates the representativeness of the Estonian Biobank (EstBB) and its two recruitment waves relative to the general Estonian population, approximated by a 30% national reference dataset (EH30). To support generalizability and informed study design, we quantify systematic differences in disease prevalence and demographics, with additional consideration of disease burden using DALY metrics to contextualize the potential impact of over- or underrepresented conditions."
+                                                ),
+                                                # HOW Section
+                                                tags$h4(tags$b("HOW")),
+                                                tags$p(
+                                                  "We analyzed diagnosis prevalence using two Estonian healthcare datasets including the Estonian Biobank (EstBB) and a representative population sample (EH30). Diagnoses were grouped by ICD-10 codes and stratified by age and gender across 2012–2023, with prevalence ratios computed and synthesized using meta-analysis. To ensure interpretability and robustness, we applied thresholds for fold difference magnitude and confidence interval precision, and visualized results via an interactive dashboard."
+                                                )
+                                     )
+                       ),
 
-                     # HOW Section
-                     tags$h4(tags$b("HOW")),
-                     tags$p(
-                       "We analyzed diagnosis prevalence using two Estonian healthcare datasets including the Estonian Biobank (EstBB) and a representative population sample (EH30). Diagnoses were grouped by ICD-10 codes and stratified by age and gender across 2012–2023, with prevalence ratios computed and synthesized using meta-analysis. To ensure interpretability and robustness, we applied thresholds for fold difference magnitude and confidence interval precision, and visualized results via an interactive dashboard."
-                     ),
-
-                     # RESULTS Section
-                     tags$h4(tags$b("RESULTS")),
-                     tags$p(
-                       "Our analysis reveals that EstBB is enriched for outpatient-managed, non-acute, and preventive care diagnoses, including dermatological, reproductive, endocrine, and mental health conditions. In contrast, severe and high-mortality diseases—such as dementia, stroke sequelae, advanced cancers, and chronic respiratory failure—are consistently underrepresented. Gender-specific trends indicate a higher cardiovascular burden and stronger overrepresentation of diagnoses in men, while women are more representative of the general population. The second wave of recruitment (EstBB2), characterized by simplified procedures and broad outreach, represents a healthier subset with lower prevalence of chronic disease and higher engagement in mental health and preventive care. Conversely, the first wave (EstBB1) shows a specific subcohort with a higher disease burden, particularly among males."
-                     ),
-
-                     # CONCLUSION Section
-                     tags$h4(tags$b("CONCLUSION")),
-                     tags$p(
-                       "EstBB is well-suited for genetic association studies, behavioral health research, and longitudinal tracking of chronic conditions. Its strengths include high-quality phenotype data and strong representation of traits with stable outpatient management. However, researchers must critically account for selection bias and demographic skew when modeling population-level disease burden or studying late-stage and high-mortality conditions. The accompanying dashboard enhances transparency and adaptability, allowing researchers to interrogate cohort composition and refine phenotype selection prior to analysis. This analysis supports more accurate interpretation of biobank-derived findings and strengthens the design of future studies using EstBB data."
+                       # Column 2 - MUST USE shiny::column
+                       shiny::column(width = 6,
+                                     shiny::div(class = "text-justify",
+                                                # RESULTS Section
+                                                tags$h4(tags$b("RESULTS")),
+                                                tags$p(
+                                                  "Our analysis reveals that EstBB is enriched for outpatient-managed, non-acute, and preventive care diagnoses, including dermatological, reproductive, endocrine, and mental health conditions. In contrast, severe and high-mortality diseases—such as dementia, stroke sequelae, advanced cancers, and chronic respiratory failure—are consistently underrepresented. Gender-specific trends indicate a higher cardiovascular burden and stronger overrepresentation of diagnoses in men, while women are more representative of the general population. The second wave of recruitment (EstBB2), characterized by simplified procedures and broad outreach, represents a healthier subset with lower prevalence of chronic disease and higher engagement in mental health and preventive care. Conversely, the first wave (EstBB1) shows a specific subcohort with a higher disease burden, particularly among males."
+                                                ),
+                                                # CONCLUSION Section
+                                                tags$h4(tags$b("CONCLUSION")),
+                                                tags$p(
+                                                  "EstBB is well-suited for genetic association studies, behavioral health research, and longitudinal tracking of chronic conditions. Its strengths include high-quality phenotype data and strong representation of traits with stable outpatient management. However, researchers must critically account for selection bias and demographic skew when modeling population-level disease burden or studying late-stage and high-mortality conditions. The accompanying dashboard enhances transparency and adaptability, allowing researchers to interrogate cohort composition and refine phenotype selection prior to analysis. This analysis supports more accurate interpretation of biobank-derived findings and strengthens the design of future studies using EstBB data."
+                                                )
+                                     )
+                       )
                      )
           )
         )
@@ -370,8 +383,8 @@ body <- shinydashboard::dashboardBody(
                           DT::dataTableOutput("upload_diff_genders_meta1_DT")
           ),
           shiny::tabPanel(paste0("Print (",name2, ") / (", name1, ")"),
-                          downloadButton("download_gt_pdf", "Download PDF"),
-                          downloadButton("download_gt_html", "Download HTML"),
+                          # downloadButton("download_gt_pdf", "Download PDF"),
+                          # downloadButton("download_gt_html", "Download HTML"),
                           gt_output("upload_diff_genders_meta1_GT")
           ),
 
@@ -380,8 +393,8 @@ body <- shinydashboard::dashboardBody(
                           DT::dataTableOutput("upload_diff_genders_meta2_DT")
           ),
           shiny::tabPanel(paste0("Print (",name3, ") / (", name1, ")"),
-                          downloadButton("download_gt_pdf_meta2", "Download PDF"),
-                          downloadButton("download_gt_html_meta2", "Download HTML"),
+                          # downloadButton("download_gt_pdf_meta2", "Download PDF"),
+                          # downloadButton("download_gt_html_meta2", "Download HTML"),
                           gt_output("upload_diff_genders_meta2_GT")
           ),
 
@@ -390,8 +403,8 @@ body <- shinydashboard::dashboardBody(
                           DT::dataTableOutput("upload_diff_genders_meta3_DT")
           ),
           shiny::tabPanel(paste0("Print (",name4, ") / (", name1, ")"),
-                          downloadButton("download_gt_pdf_meta3", "Download PDF"),
-                          downloadButton("download_gt_html_meta3 ", "Download HTML"),
+                          # downloadButton("download_gt_pdf_meta3", "Download PDF"),
+                          # downloadButton("download_gt_html_meta3 ", "Download HTML"),
                           gt_output("upload_diff_genders_meta3_GT")
           ),
 
@@ -400,8 +413,8 @@ body <- shinydashboard::dashboardBody(
                           DT::dataTableOutput("upload_diff_genders_meta4_DT")
           ),
           shiny::tabPanel(paste0("Print (",name4, ") / (", name3, ")"),
-                          downloadButton("download_gt_pdf_meta4", "Download PDF"),
-                          downloadButton("download_gt_html_meta4 ", "Download HTML"),
+                          # downloadButton("download_gt_pdf_meta4", "Download PDF"),
+                          # downloadButton("download_gt_html_meta4 ", "Download HTML"),
                           gt_output("upload_diff_genders_meta4_GT")
           ),
 
@@ -439,26 +452,32 @@ body <- shinydashboard::dashboardBody(
             # Content Row: Displays Logos, Funding, and Contact images/info
             shiny::fluidRow(
               # --- Contact Information Column ---
-              shiny::column(width = 4, class = "image-column",
+              shiny::column(width = 6, class = "text-justify",
                             tags$h4(tags$b("Contact Information")),
-                            # Replaced ul/li with standard paragraph tags
-                            tags$p(tags$b(" Maarja Pajusalu"), ""),
-                            tags$p(tags$a(href = "mailto:maarja.pajusalu@ut.ee", "maarja.pajusalu@ut.ee")),
-                            tags$img(src = "img/contacts.png", class = "fixed-image")
+                            tags$p("Maarja Pajusalu"),
+                            tags$p("maarja.pajusalu@ut.ee"),
+                            tags$p(""),
+                            tags$h4(tags$b("Collaborating Institutions")),
+                            tags$p(""),
+                              tags$a(
+                                href = "https://cs.ut.ee/en",
+                                target = "_blank", # Opens link in a new tab
+                                tags$b("University of Tartu, Institute of Computer Science")
+                            ),
+                            tags$p(""),
+                            tags$a(
+                                href = "https://health-informatics.cs.ut.ee",
+                                target = "_blank", # Opens link in a new tab
+                                tags$b("Research Group of Health Informatics")
+                              ),
+                            tags$img(src = "img/logos.png", width="300px")
               ),
 
               # --- Funding Sources Column ---
-              shiny::column(width = 4, class = "image-column",
+              shiny::column(width = 6, class = "image-column",
                             tags$h4(tags$b("Funding & Acknowledgments")),
                             tags$p(""),
                             tags$img(src = "img/funding.png", class = "fixed-image")
-              ),
-
-              # --- Logos/Institutions Column ---
-              shiny::column(width = 4, class = "image-column",
-                            tags$h4(tags$b("Collaborating Institutions")),
-                            tags$p(""),
-                            tags$img(src = "img/logos.png", class = "fixed-image")
               )
             )
           )

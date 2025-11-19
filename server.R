@@ -724,15 +724,15 @@ server <- function(input, output, session) {
 
     # Perform the join as in your helper script
     d <- pop_bb1 %>%
-      select(parent0_code, parent2_code, parent2_name_EN, gender_EN, p_vs_bb1 = prevalence_diff) %>%
+      select(parent0_code, parent2_code, parent2_name_EN, gender_EN, p_vs_bb1 = prevalence_diff, p_vs_bb1_p = p_value) %>%
       left_join(
         pop_bb2 %>%
-          select(parent0_code, parent2_code, parent2_name_EN, gender_EN, p_vs_bb2 = prevalence_diff),
+          select(parent0_code, parent2_code, parent2_name_EN, gender_EN, p_vs_bb2 = prevalence_diff, p_vs_bb2_p = p_value),
         by = c("parent0_code", "parent2_code", "parent2_name_EN", "gender_EN")
       ) %>%
       left_join(
         pop_bb %>%
-          select(parent0_code, parent2_code, parent2_name_EN, gender_EN, p_vs_bb = prevalence_diff),
+          select(parent0_code, parent2_code, parent2_name_EN, gender_EN, p_vs_bb = prevalence_diff, p_vs_bb_p = p_value),
         by = c("parent0_code", "parent2_code", "parent2_name_EN", "gender_EN")
       )
 
@@ -770,8 +770,15 @@ server <- function(input, output, session) {
   output$p_death_bb <- plotly::renderPlotly({
     plot_data <- filtered_data_dd()
     p <- create_p_death_bb(plot_data)
-    plotly::ggplotly(p) %>%
+    plotly::ggplotly(p, tooltip = c("text")) %>%
       layout(
+        hoverlabel = list(
+          bgcolor = "rgba(245, 245, 220, 0.9)",
+          font = list(color = "black", size = 11,
+                      align = 'left'),
+          bordercolor = "rgba(0, 0, 0, 0)",
+          namelength = 20
+        ),
         xaxis = list(
           showline = TRUE,
           linecolor = toRGB(color_lines),
@@ -788,8 +795,15 @@ server <- function(input, output, session) {
   output$p_disability_bb <- plotly::renderPlotly({
     plot_data <- filtered_data_dd()
     p <- create_p_disability_bb(plot_data)
-    plotly::ggplotly(p) %>%
+    plotly::ggplotly(p, tooltip = c("text")) %>%
       layout(
+        hoverlabel = list(
+          bgcolor = "rgba(245, 245, 220, 0.9)",
+          font = list(color = "black", size = 11,
+                      align = 'left'),
+          bordercolor = "rgba(0, 0, 0, 0)",
+          namelength = 20
+        ),
         xaxis = list(
           showline = TRUE,
           linecolor = toRGB(color_lines),
@@ -825,8 +839,15 @@ server <- function(input, output, session) {
   output$p_death_bb1 <- plotly::renderPlotly({
     plot_data <- filtered_data_dd()
     p <- create_p_death_bb1(plot_data)
-    plotly::ggplotly(p) %>%
+    plotly::ggplotly(p, tooltip = c("text")) %>%
       layout(
+        hoverlabel = list(
+          bgcolor = "rgba(245, 245, 220, 0.9)",
+          font = list(color = "black", size = 11,
+                      align = 'left'),
+          bordercolor = "rgba(0, 0, 0, 0)",
+          namelength = 20
+        ),
         xaxis = list(
           showline = TRUE,
           linecolor = toRGB(color_lines),
@@ -843,8 +864,15 @@ server <- function(input, output, session) {
   output$p_disability_bb1 <- plotly::renderPlotly({
     plot_data <- filtered_data_dd()
     p <- create_p_disability_bb1(plot_data)
-    plotly::ggplotly(p) %>%
+    plotly::ggplotly(p, tooltip = c("text")) %>%
       layout(
+        hoverlabel = list(
+          bgcolor = "rgba(245, 245, 220, 0.9)",
+          font = list(color = "black", size = 11,
+                      align = 'left'),
+          bordercolor = "rgba(0, 0, 0, 0)",
+          namelength = 20
+        ),
         xaxis = list(
           showline = TRUE,
           linecolor = toRGB(color_lines),
@@ -880,8 +908,15 @@ server <- function(input, output, session) {
   output$p_death_bb2 <- plotly::renderPlotly({
     plot_data <- filtered_data_dd()
     p <- create_p_death_bb2(plot_data)
-    plotly::ggplotly(p) %>%
+    plotly::ggplotly(p, tooltip = c("text")) %>%
       layout(
+        hoverlabel = list(
+          bgcolor = "rgba(245, 245, 220, 0.9)",
+          font = list(color = "black", size = 11,
+                      align = 'left'),
+          bordercolor = "rgba(0, 0, 0, 0)",
+          namelength = 20
+        ),
         xaxis = list(
           showline = TRUE,
           linecolor = toRGB(color_lines),
@@ -898,8 +933,15 @@ server <- function(input, output, session) {
   output$p_disability_bb2 <- plotly::renderPlotly({
     plot_data <- filtered_data_dd()
     p <- create_p_disability_bb2(plot_data)
-    plotly::ggplotly(p) %>%
+    plotly::ggplotly(p, tooltip = c("text")) %>%
       layout(
+        hoverlabel = list(
+          bgcolor = "rgba(245, 245, 220, 0.9)",
+          font = list(color = "black", size = 11,
+                      align = 'left'),
+          bordercolor = "rgba(0, 0, 0, 0)",
+          namelength = 20
+        ),
         xaxis = list(
           showline = TRUE,
           linecolor = toRGB(color_lines),
@@ -912,7 +954,6 @@ server <- function(input, output, session) {
         )
       )
   })
-
 
   # ----------------------------------------------------------------------
   # Server Logic: Distribution by Gender (M/F)
@@ -2161,7 +2202,7 @@ server <- function(input, output, session) {
         scrollX = TRUE,
         # Adjust these targets based on the actual columns in your meta1 data
         columnDefs = list(
-          list(visible = FALSE, targets = c(0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
+          list(visible = FALSE, targets = c(0, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
         )
       ),
       # Ensure the input names are unique if you plan to use multiple DT tables
@@ -2198,7 +2239,7 @@ server <- function(input, output, session) {
         colReorder = TRUE,
         scrollX = TRUE,
         columnDefs = list(
-          list(visible = FALSE, targets = c(0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
+          list(visible = FALSE, targets = c(0, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
         )
       ),
       callback = JS("
@@ -2233,7 +2274,7 @@ server <- function(input, output, session) {
         colReorder = TRUE,
         scrollX = TRUE,
         columnDefs = list(
-          list(visible = FALSE, targets = c(0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
+          list(visible = FALSE, targets = c(0, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
         )
       ),
       callback = JS("
@@ -2268,7 +2309,7 @@ server <- function(input, output, session) {
         colReorder = TRUE,
         scrollX = TRUE,
         columnDefs = list(
-          list(visible = FALSE, targets = c(0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
+          list(visible = FALSE, targets = c(0, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27))
         )
       ),
       callback = JS("
