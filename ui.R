@@ -1,11 +1,12 @@
-###SHINY UI - Version EH30 ### -----
+###SHINY UI - Version Est-Health-30 ### -----
 # Header ------------
 header <- shinydashboard::dashboardHeader(title = "EstBB vs Population")
 # Sidebar ------------
 sidebar <- shinydashboard::dashboardSidebar(
   shinydashboard::sidebarMenu(
     shinydashboard::menuItem("Plots", tabName = "Visuals", icon = shiny::icon("user")),
-    shinydashboard::menuItem("Data tables", tabName = "DataTables", icon = shiny::icon("table")),
+    shinydashboard::menuItem("Data tables - Gender", tabName = "DataTables_Gender", icon = shiny::icon("table")),
+    shinydashboard::menuItem("Data tables - Age Groups", tabName = "DataTables_AgeGroups", icon = shiny::icon("table")),
     shinydashboard::menuItem("About the Study", tabName = "AboutStudy", icon = icon("info-circle")),
     shinydashboard::menuItem("Contacts", tabName = "ContactsTab", icon = icon("address-book"))
   ),
@@ -240,8 +241,8 @@ body <- shinydashboard::dashboardBody(
                               shiny::fluidRow(
                                 shiny::column(width = 3,
                                               shiny::radioButtons("filterDatasets", label= "Compare:",
-                                                                  choices = c("EH30 vs EstBB", "EH30 vs EstBB1", "EH30 vs EstBB2", "EstBB1 vs EstBB2"),
-                                                                  selected = "EH30 vs EstBB", inline=FALSE)
+                                                                  choices = c("Est-Health-30 vs EstBB", "Est-Health-30 vs EstBB1", "Est-Health-30 vs EstBB2", "EstBB1 vs EstBB2"),
+                                                                  selected = "Est-Health-30 vs EstBB", inline=FALSE)
                                 ),
                                 shiny::column(width = 3,
                                               shiny::selectInput("filterAge", label= "Age:", choices = NULL, selected = NULL, multiple=TRUE)
@@ -342,12 +343,12 @@ body <- shinydashboard::dashboardBody(
                                                 # WHY Section
                                                 tags$h4(tags$b("WHY")),
                                                 tags$p(
-                                                  "When publishing research, it is essential to critically assess whether the study sample is representative of the target population. This study evaluates the representativeness of the Estonian Biobank (EstBB) and its two recruitment waves relative to the general Estonian population, approximated by a 30% national reference dataset (EH30). To support generalizability and informed study design, we quantify systematic differences in disease prevalence and demographics, with additional consideration of disease burden using DALY metrics to contextualize the potential impact of over- or underrepresented conditions."
+                                                  "When publishing research, it is essential to critically assess whether the study sample is representative of the target population. This study evaluates the representativeness of the Estonian Biobank (EstBB) and its two recruitment waves relative to the general Estonian population, approximated by a 30% national reference dataset (Est-Health-30). To support generalizability and informed study design, we quantify systematic differences in disease prevalence and demographics, with additional consideration of disease burden using DALY metrics to contextualize the potential impact of over- or underrepresented conditions."
                                                 ),
                                                 # HOW Section
                                                 tags$h4(tags$b("HOW")),
                                                 tags$p(
-                                                  "We analyzed diagnosis prevalence using two Estonian healthcare datasets including the Estonian Biobank (EstBB) and a representative population sample (EH30). Diagnoses were grouped by ICD-10 codes and stratified by age and gender across 2012–2023, with prevalence ratios computed and synthesized using meta-analysis. To ensure interpretability and robustness, we applied thresholds for fold difference magnitude and confidence interval precision, and visualized results via an interactive dashboard."
+                                                  "We analyzed diagnosis prevalence using two Estonian healthcare datasets including the Estonian Biobank (EstBB) and a representative population sample (Est-Health-30). Diagnoses were grouped by ICD-10 codes and stratified by age and gender across 2012–2023, with prevalence ratios computed and synthesized using meta-analysis. To ensure interpretability and robustness, we applied thresholds for fold difference magnitude and confidence interval precision, and visualized results via an interactive dashboard."
                                                 )
                                      )
                        ),
@@ -372,67 +373,152 @@ body <- shinydashboard::dashboardBody(
         )
       ),
       # ==========================================================================
-      # TAB ITEM 2: DATA TABLES
+      # ==========================================================================
+      # TAB ITEM: DATA TABLES - GENDERS
       # ==========================================================================
       shinydashboard::tabItem(
-        tabName = "DataTables",
+        tabName = "DataTables_Gender",
 
-        shinydashboard::tabBox(
-          width = 12,
-          id = "tabset1",
+        fluidRow(
+          column(
+            width = 12,
 
-          # Meta 1
-          shiny::tabPanel(paste0("Genders (",name2, ") / (", name1, ")"),
-                          DT::dataTableOutput("upload_diff_genders_meta1_DT")
-          ),
-          shiny::tabPanel(paste0("Print (",name2, ") / (", name1, ")"),
-                          # downloadButton("download_gt_pdf", "Download PDF"),
-                          # downloadButton("download_gt_html", "Download HTML"),
-                          gt_output("upload_diff_genders_meta1_GT")
-          ),
+            shinydashboard::tabBox(
+              width = 12,
+              id = "gender_tabs",
+              title = "Gender Analysis",
 
-          # Meta 2
-          shiny::tabPanel(paste0("Genders (",name3, ") / (", name1, ")"),
-                          DT::dataTableOutput("upload_diff_genders_meta2_DT")
-          ),
-          shiny::tabPanel(paste0("Print (",name3, ") / (", name1, ")"),
-                          # downloadButton("download_gt_pdf_meta2", "Download PDF"),
-                          # downloadButton("download_gt_html_meta2", "Download HTML"),
-                          gt_output("upload_diff_genders_meta2_GT")
-          ),
+              # Meta 1
+              shiny::tabPanel(paste0(name2, "/", name1),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_gender_meta1", "Download CSV")
+                              ),
+                              DT::dataTableOutput("upload_diff_genders_meta1_DT")
+              ),
+              shiny::tabPanel(paste0("Print (", name2, "/", name1, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_gender_meta1_GT", "Download PDF")
+                              ),
+                              gt_output("upload_diff_genders_meta1_GT")
+              ),
 
-          # Meta 3
-          shiny::tabPanel(paste0("Genders (",name4, ") / (", name1, ")"),
-                          DT::dataTableOutput("upload_diff_genders_meta3_DT")
-          ),
-          shiny::tabPanel(paste0("Print (",name4, ") / (", name1, ")"),
-                          # downloadButton("download_gt_pdf_meta3", "Download PDF"),
-                          # downloadButton("download_gt_html_meta3 ", "Download HTML"),
-                          gt_output("upload_diff_genders_meta3_GT")
-          ),
+              # Meta 2
+              shiny::tabPanel(paste0(name3, "/", name1),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_gender_meta2", "Download CSV")
+                              ),
+                              DT::dataTableOutput("upload_diff_genders_meta2_DT")
+              ),
+              shiny::tabPanel(paste0("Print (", name3, "/", name1, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_gender_meta2_GT", "Download PDF")
+                              ),
+                              gt_output("upload_diff_genders_meta2_GT")
+              ),
 
-          # Meta 4
-          shiny::tabPanel(paste0("Genders (",name4, ") / (", name3, ")"),
-                          DT::dataTableOutput("upload_diff_genders_meta4_DT")
-          ),
-          shiny::tabPanel(paste0("Print (",name4, ") / (", name3, ")"),
-                          # downloadButton("download_gt_pdf_meta4", "Download PDF"),
-                          # downloadButton("download_gt_html_meta4 ", "Download HTML"),
-                          gt_output("upload_diff_genders_meta4_GT")
-          ),
+              # Meta 3
+              shiny::tabPanel(paste0(name4, "/", name1),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_gender_meta3", "Download CSV")
+                              ),
+                              DT::dataTableOutput("upload_diff_genders_meta3_DT")
+              ),
+              shiny::tabPanel(paste0("Print (", name4, "/", name1, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_gender_meta3_GT", "Download PDF")
+                              ),
+                              gt_output("upload_diff_genders_meta3_GT")
+              ),
 
-          # Age Groups
-          shiny::tabPanel(paste0("Age groups (",name2, ") / (", name1, ")"),
-                          DT::dataTableOutput("age_meta1")
-          ),
-          shiny::tabPanel(paste0("Age groups (",name3, ") / (", name1, ")"),
-                          DT::dataTableOutput("age_meta2")
-          ),
-          shiny::tabPanel(paste0("Age groups (",name4, ") / (", name1, ")"),
-                          DT::dataTableOutput("age_meta3")
-          ),
-          shiny::tabPanel(paste0("Age groups (",name4, ") / (", name3, ")"),
-                          DT::dataTableOutput("age_meta4")
+              # Meta 4
+              shiny::tabPanel(paste0(name4, "/", name3),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_gender_meta4", "Download CSV")
+                              ),
+                              DT::dataTableOutput("upload_diff_genders_meta4_DT")
+              ),
+              shiny::tabPanel(paste0("Print (", name4, "/", name3, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_gender_meta4_GT", "Download PDF")
+                              ),
+                              gt_output("upload_diff_genders_meta4_GT")
+              )
+            )
+          )
+        )
+      ),
+
+      # ==========================================================================
+      # TAB ITEM: DATA TABLES - AGE GROUPS
+      # ==========================================================================
+      shinydashboard::tabItem(
+        tabName = "DataTables_AgeGroups",
+
+        fluidRow(
+          column(
+            width = 12,
+
+            shinydashboard::tabBox(
+              width = 12,
+              id = "age_tabs",
+              title = "Age Group Analysis",
+
+              # Meta 1
+              shiny::tabPanel(paste0(name2, "/", name1),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_age_meta1", "Download CSV")
+                              ),
+                              DT::dataTableOutput("age_meta1")
+              ),
+              shiny::tabPanel(paste0("Print (", name2, "/", name1, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_age_meta1_GT", "Download PDF")
+                              ),
+                              gt_output("age_meta1_GT")
+              ),
+
+              # Meta 2
+              shiny::tabPanel(paste0(name3, "/", name1),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_age_meta2", "Download CSV")
+                              ),
+                              DT::dataTableOutput("age_meta2")
+              ),
+              shiny::tabPanel(paste0("Print (", name3, "/", name1, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_age_meta2_GT", "Download PDF")
+                              ),
+                              gt_output("age_meta2_GT")
+              ),
+
+              # Meta 3
+              shiny::tabPanel(paste0(name4, "/", name1),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_age_meta3", "Download CSV")
+                              ),
+                              DT::dataTableOutput("age_meta3")
+              ),
+              shiny::tabPanel(paste0("Print (", name4, "/", name1, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_age_meta3_GT", "Download PDF")
+                              ),
+                              gt_output("age_meta3_GT")
+              ),
+
+              # Meta 4
+              shiny::tabPanel(paste0(name4, "/", name3),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_csv_age_meta4", "Download CSV")
+                              ),
+                              DT::dataTableOutput("age_meta4")
+              ),
+              shiny::tabPanel(paste0("Print (", name4, "/", name3, ")"),
+                              div(style = "margin-bottom: 10px;",
+                                  downloadButton("download_pdf_age_meta4_GT", "Download PDF")
+                              ),
+                              gt_output("age_meta4_GT")
+              )
+            )
           )
         )
       ),

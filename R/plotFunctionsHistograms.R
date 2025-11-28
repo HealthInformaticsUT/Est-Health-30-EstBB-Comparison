@@ -16,7 +16,7 @@ create_p_histogram_bb <- function(plot_data) {
     geom_vline(xintercept = 1, color = "grey10", linetype = 1, alpha=0.9, size = 0.8) +
     geom_vline(xintercept = 1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
     geom_vline(xintercept = 1/1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
-    annotate("text", x = 1/1.7, y = 160, label = "EH30", hjust = 1, vjust = 0, size = 3, color = "black") +
+    annotate("text", x = 1/1.7, y = 160, label = "Est-Health-30", hjust = 1, vjust = 0, size = 3, color = "black") +
     annotate("text", x = 1.7, y = 160, label = "EstBB", hjust = 0, vjust = 0, size = 3, color = "black") +
     theme_bw()+
     theme(
@@ -75,7 +75,7 @@ create_p_disability_bb <- function(plot_data) {
     scale_size_continuous(range = c(0.3,4)) +
     ylab("Size = Years Lost\n to Disability")+
     scale_color_gradient(low = "grey50", high = "black") +
-    scale_x_continuous("prev_EstBB / prev_EH30", trans = "log2", limits = c(0.125, 4)) +
+    scale_x_continuous("prev_EstBB / prev_Est-Health-30", trans = "log2", limits = c(0.125, 4)) +
     geom_vline(xintercept = 1, color = "grey10", linetype = 1, alpha=0.9, size = 0.8) +
     geom_vline(xintercept = 1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
     geom_vline(xintercept = 1/1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
@@ -102,7 +102,7 @@ create_p_histogram_bb1 <- function(plot_data) {
     geom_vline(xintercept = 1, color = "grey10", linetype = 1, alpha=0.9, size = 0.8) +
     geom_vline(xintercept = 1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
     geom_vline(xintercept = 1/1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
-    annotate("text", x = 1/1.7, y = 160, label = "EH30", hjust = 1, vjust = 0, size = 3, color = "black") +
+    annotate("text", x = 1/1.7, y = 160, label = "Est-Health-30", hjust = 1, vjust = 0, size = 3, color = "black") +
     annotate("text", x = 1.7, y = 160, label = "EstBB1", hjust = 0, vjust = 0, size = 3, color = "black") +
     theme_bw() +
     theme(
@@ -155,7 +155,7 @@ create_p_disability_bb1 <- function(plot_data) {
     geom_point(position = position_jitter(seed = 42)) +
     scale_size_continuous(range = c(0.3, 4)) +
     scale_color_gradient(low = "grey50", high = "black") +
-    scale_x_continuous("prev_EstBB1 / prev_EH30", trans = "log2", limits = c(0.125, 4)) +
+    scale_x_continuous("prev_EstBB1 / prev_Est-Health-30", trans = "log2", limits = c(0.125, 4)) +
     geom_vline(xintercept = 1, color = "grey10", linetype = 1, alpha=0.9, size = 0.8) +
     geom_vline(xintercept = 1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
     geom_vline(xintercept = 1/1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
@@ -182,7 +182,7 @@ create_p_histogram_bb2 <- function(plot_data) {
     geom_vline(xintercept = 1, color = "grey10", linetype = 1, alpha=0.9, size = 0.8) +
     geom_vline(xintercept = 1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
     geom_vline(xintercept = 1/1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
-    annotate("text", x = 1/1.7, y = 160, label = "EH30", hjust = 1, vjust = 0, size = 3, color = "black") +
+    annotate("text", x = 1/1.7, y = 160, label = "Est-Health-30", hjust = 1, vjust = 0, size = 3, color = "black") +
     annotate("text", x = 1.7, y = 160, label = "EstBB2", hjust = 0, vjust = 0, size = 3, color = "black") +
     theme_bw() +
     theme(
@@ -234,7 +234,7 @@ create_p_disability_bb2 <- function(plot_data) {
     geom_point(position = position_jitter(seed = 42)) +
     scale_size_continuous(range = c(0.3,4)) +
     scale_color_gradient(low = "grey50", high = "black") +
-    scale_x_continuous("prev_EstBB2 / prev_EH30", trans = "log2", limits = c(0.125, 4)) +
+    scale_x_continuous("prev_EstBB2 / prev_Est-Health-30", trans = "log2", limits = c(0.125, 4)) +
     geom_vline(xintercept = 1, color = "grey10", linetype = 1, alpha=0.9, size = 0.8) +
     geom_vline(xintercept = 1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +
     geom_vline(xintercept = 1/1.3, color = color_dotline, linetype = 3, alpha=0.9, size=0.5) +

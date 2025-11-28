@@ -41,13 +41,15 @@ source("R/dataPrepFunctions.R")
 source("R/plotFunctions.R")
 source("R/plotFunctionsHistograms.R")
 source("R/plotFunctionsGender.R")
+source("R/tableHelpers.R")
+source("R/downloads.R")
 
 
 age_levels <- c("10-19", "20-29", "30-39",
                 "40-49", "50-59", "60-69",
                 "70-79", "80+")
 
-name1 = "EH30"
+name1 = "Est-Health-30"
 name2 = "EstBB"
 name3 = "EstBB1"
 name4 = "EstBB2"
