@@ -66,7 +66,7 @@ plot_height_inches <- max(2, num_rows * 0.25)
   scale_fill_manual(values = c("F" = color_female,
                                "M" = color_male,
                                "Both" = color_all), guide = "none") +
-  scale_alpha_manual(values = c("nosig" = 0.2, "sig" = 1), guide = "none") +
+  scale_alpha_manual(values = c("nosig" = 0.5, "sig" = 1), guide = "none") +
   scale_x_continuous(
     "Prevalence Ratio (Fold Difference)",
     # Breaks in log2 space (calculated as log2(0.25) to log2(4))
