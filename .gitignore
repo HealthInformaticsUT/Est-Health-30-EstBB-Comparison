@@ -24,6 +24,9 @@ profvis_result*.html
 # Internal screenshots (article submission artefacts, not runtime)
 Screenshot*.png
 
+# Internal development log (workfile, kept local)
+PROJECT.md
+
 # Data — both CSVs (canonical, for the paper supplement) and parquet
 # (runtime acceleration cache) are committed. Provenance documented in
 # scripts/regenerate_data.R.
