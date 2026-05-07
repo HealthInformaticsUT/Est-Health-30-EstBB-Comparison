@@ -4,7 +4,6 @@
 # Load packages
 library(shiny)
 library(shinydashboard)
-library(shinyWidgets)
 library(shinyjs)
 library(shinycssloaders)
 library(DT)
@@ -18,7 +17,6 @@ library(tidyr)
 library(stringr)
 library(readr)
 library(scales)
-library(webshot2)
 
 # Pre-warm systemfonts cache.
 # ggiraph calls font_family_exists() per text element when generating SVG,
@@ -32,7 +30,7 @@ local({
     for (fam in c("sans", "serif", "mono")) {
       try(systemfonts::register_font(
         name  = fam,
-        plain = systemfonts::match_font(fam)$path
+        plain = systemfonts::match_fonts(fam)$path
       ), silent = TRUE)
     }
   }
