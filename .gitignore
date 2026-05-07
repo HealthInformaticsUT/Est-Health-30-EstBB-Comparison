@@ -1,0 +1,36 @@
+# R session state — never commit
+.Rhistory
+.RData
+.RDataTmp
+.RDataTmp1
+.RDataTmp2
+.Rapp.history
+
+# RStudio project state
+.Rproj.user/
+*.Rproj.bak
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Profiling artefacts (large HTMLs + supporting files)
+profvis_runs/
+profvis_result*.html
+
+# Backups + old code
+*.bak
+
+# Internal screenshots (article submission artefacts, not runtime)
+Screenshot*.png
+
+# Data — both CSVs (canonical, for the paper supplement) and parquet
+# (runtime acceleration cache) are committed. Provenance documented in
+# scripts/regenerate_data.R.
+
+# rsconnect deploy state may contain account-specific identifiers — keep local
+rsconnect/
+
+# Editor / OS scratch
+*.swp
+*~

@@ -1,0 +1,31 @@
+# .rscignore — files excluded from rsconnect / shinyapps.io deploy bundle
+# Pattern syntax follows .gitignore conventions.
+
+# RStudio / R session state (never needed at runtime)
+.Rproj.user/
+.Rhistory
+.RData
+.RDataTmp
+.RDataTmp1
+.RDataTmp2
+*.Rproj
+.DS_Store
+
+# Local backups and profiling output
+app.R.bak
+profvis_result.html
+
+# Screenshots and internal docs (not runtime)
+Screenshot*.png
+PROJECT.md
+speed_update_plan.md
+
+# Build / dev scripts (deploy script itself is excluded; run it locally)
+scripts/
+
+# Disabled tab helper (Volcano tab hidden 2026-04-28)
+R/plot_volcano.R
+
+# Ship parquet only — CSVs are kept locally for fallback and audit
+comp_data/*.csv
+source_data/*.csv

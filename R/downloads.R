@@ -1,55 +1,42 @@
-#' Create a CSV Download Handler
+# downloads.R — CSV and PDF download handlers
+
+#' Create a CSV download handler
 #'
-#' @param data_reactive A reactive expression returning the dataframe to download
-#' @param filename_prefix String to prefix the filename (e.g., "Gender_Analysis")
-#'
-#' @return A downloadHandler function
+#' @param data_reactive Reactive expression returning the dataframe
+#' @param filename_prefix Prefix for the download filename
+#' @return A downloadHandler
 create_csv_download <- function(data_reactive, filename_prefix) {
-  downloadHandler(
+  shiny::downloadHandler(
     filename = function() {
       paste0(filename_prefix, "_", Sys.Date(), ".csv")
     },
     content = function(file) {
-      # Get data from reactive
       df <- data_reactive()
-      req(df)
+      shiny::req(df)
       write.csv(df, file, row.names = FALSE)
     }
   )
 }
 
-#' Create a download handler function for a GT table.
+#' Create PDF download content function for a GT table
 #'
-#' This function returns a function suitable for use within Shiny's downloadHandler,
-#' which generates the GT table and saves it as a PDF.
-#'
-#' @param gt_table_reactive A reactive expression that returns the gt table object.
-#' @param filename_prefix A character string to prepend to the filename.
-#'
-#' @return A function to be used as the 'content' argument in downloadHandler.
+#' @param gt_table_reactive Reactive expression returning a gt table
+#' @param filename_prefix Prefix for the filename
+#' @return A function suitable for downloadHandler's content argument
 gt_download_pdf <- function(gt_table_reactive, filename_prefix) {
-
-  # The function returned here is the 'content' function for downloadHandler
   function(file) {
-
-    # Ensure the required gt object is available
     gt_table <- gt_table_reactive()
-    req(gt_table)
+    shiny::req(gt_table)
 
-    # 1. Define the filename
-    # Create a timestamped, descriptive filename
     timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
     filename <- paste0(filename_prefix, "_", timestamp, ".pdf")
 
-    # 2. Save the GT table as a PDF
-    # Note: gtsave requires webshot2 package to be installed for PDF output
     gt::gtsave(
       data = gt_table,
       filename = filename,
-      path = tempdir() # Save to a temporary directory first
+      path = tempdir()
     )
 
-    # 3. Copy the temporary file to the final download location
     file.copy(file.path(tempdir(), filename), file)
   }
 }
