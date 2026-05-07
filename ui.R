@@ -80,21 +80,30 @@ body <- shinydashboard::dashboardBody(
                 shiny::fluidRow(
                   # Column 1: EstBB
                   shiny::column(width = 4,
-                    plotly::plotlyOutput("p_histogram_bb", height = "24vh"),
-                    plotly::plotlyOutput("p_death_bb", height = "24vh"),
-                    plotly::plotlyOutput("p_disability_bb", height = "24vh")
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bb", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_death_bb", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_disability_bb", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6)
                   ),
                   # Column 2: EstBB1
                   shiny::column(width = 4,
-                    plotly::plotlyOutput("p_histogram_bb1", height = "24vh"),
-                    plotly::plotlyOutput("p_death_bb1", height = "24vh"),
-                    plotly::plotlyOutput("p_disability_bb1", height = "24vh")
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bb1", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_death_bb1", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_disability_bb1", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6)
                   ),
                   # Column 3: EstBB2
                   shiny::column(width = 4,
-                    plotly::plotlyOutput("p_histogram_bb2", height = "24vh"),
-                    plotly::plotlyOutput("p_death_bb2", height = "24vh"),
-                    plotly::plotlyOutput("p_disability_bb2", height = "24vh")
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bb2", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_death_bb2", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_disability_bb2", height = "24vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6)
                   )
                 )
               )
@@ -110,16 +119,22 @@ body <- shinydashboard::dashboardBody(
                 solidHeader = TRUE, status = "primary", class = "no-margin-box",
                 shiny::fluidRow(
                   shiny::column(width = 4,
-                    plotly::plotlyOutput("p_histogram_bbM", height = "36vh"),
-                    plotly::plotlyOutput("p_histogram_bbF", height = "36vh")
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bbM", height = "36vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bbF", height = "36vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6)
                   ),
                   shiny::column(width = 4,
-                    plotly::plotlyOutput("p_histogram_bb1M", height = "36vh"),
-                    plotly::plotlyOutput("p_histogram_bb1F", height = "36vh")
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bb1M", height = "36vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bb1F", height = "36vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6)
                   ),
                   shiny::column(width = 4,
-                    plotly::plotlyOutput("p_histogram_bb2M", height = "36vh"),
-                    plotly::plotlyOutput("p_histogram_bb2F", height = "36vh")
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bb2M", height = "36vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6),
+                    shinycssloaders::withSpinner(plotly::plotlyOutput("p_histogram_bb2F", height = "36vh"),
+                      color = "#3D8FBE", type = 7, size = 0.6)
                   )
                 )
               )

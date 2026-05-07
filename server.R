@@ -142,9 +142,23 @@ server <- function(input, output, session) {
 
   # Chapter-level heatmap
   output$heatmap_meta_avg <- ggiraph::renderGirafe({
-    heatmap_meta_avg(selectedDataset_meta(), selectedAgegroups(),
-      selectedGen(), selectedCodes(), selectedNames()$name1, selectedNames()$name2,
-      scale_mode = input$scaleModeHeatmap)
+    shiny::validate(
+      shiny::need(length(input$filterCodeGroups0) > 0,
+                  "Select at least one diagnosis chapter to display the heatmap."),
+      shiny::need(length(input$filterAge) > 0,
+                  "Select at least one age group."),
+      shiny::need(length(input$filterGender) > 0,
+                  "Select at least one gender.")
+    )
+    result <- tryCatch(
+      heatmap_meta_avg(selectedDataset_meta(), selectedAgegroups(),
+        selectedGen(), selectedCodes(), selectedNames()$name1, selectedNames()$name2,
+        scale_mode = input$scaleModeHeatmap),
+      error = function(e) NULL
+    )
+    shiny::validate(shiny::need(!is.null(result),
+      "No diagnoses match the current filter combination. Try widening the Age, Gender, or Chapter selection."))
+    result
   }) |>
     shiny::bindCache(
       input$filterDatasets, input$filterAge, input$filterGender,
@@ -267,17 +281,29 @@ server <- function(input, output, session) {
   output$forest1 <- ggiraph::renderGirafe({
     shiny::validate(shiny::need(!is.null(selectedCodes_sub2()),
       "Prevalence Ratios Across Years: Click on a diagnosis code from detailed, diagnosis-level heatmap."))
-    forest1(selectedDataset_meta(), selectedAgegroups(), selectedGen(),
-      selectedCodes_sub2(), selectedNames()$name1, selectedNames()$name2,
-      scale_mode = input$scaleModeHeatmap)
+    result <- tryCatch(
+      forest1(selectedDataset_meta(), selectedAgegroups(), selectedGen(),
+        selectedCodes_sub2(), selectedNames()$name1, selectedNames()$name2,
+        scale_mode = input$scaleModeHeatmap),
+      error = function(e) NULL
+    )
+    shiny::validate(shiny::need(!is.null(result),
+      "No data to plot for this diagnosis with the current Age and Gender selection."))
+    result
   })
 
   output$pointDiff1 <- ggiraph::renderGirafe({
     shiny::validate(shiny::need(!is.null(selectedCodes_sub2()),
       "Prevalence Values Across Years: Click on a diagnosis code from detailed, diagnosis-level heatmap."))
-    pointDiff1(selectedDataset_meta(), selectedAgegroups(), selectedGen(),
-      selectedCodes_sub2(), selectedNames()$name1, selectedNames()$name2,
-      scale_mode = input$scaleModeHeatmap)
+    result <- tryCatch(
+      pointDiff1(selectedDataset_meta(), selectedAgegroups(), selectedGen(),
+        selectedCodes_sub2(), selectedNames()$name1, selectedNames()$name2,
+        scale_mode = input$scaleModeHeatmap),
+      error = function(e) NULL
+    )
+    shiny::validate(shiny::need(!is.null(result),
+      "No data to plot for this diagnosis with the current Age and Gender selection."))
+    result
   })
 
   # ============================================================================
@@ -299,16 +325,22 @@ server <- function(input, output, session) {
         shiny::validate(shiny::need(
           !is.null(input$code_filter) && length(input$code_filter) > 0,
           "Prevalence difference on forestplot: Select at least one diagnosis code."))
-        forest2_parent2(
-          upload_gp_meta[[my_cfg$gp_idx]](),
-          gender_select = input$gender_filter,
-          code_select   = input$code_filter,
-          name1 = my_cfg$n1,
-          name2 = my_cfg$n2,
-          ci_range   = ci_filter_d(),
-          fold_range = fold_filter_d(),
-          scale_mode = input$scaleModeGender
+        result <- tryCatch(
+          forest2_parent2(
+            upload_gp_meta[[my_cfg$gp_idx]](),
+            gender_select = input$gender_filter,
+            code_select   = input$code_filter,
+            name1 = my_cfg$n1,
+            name2 = my_cfg$n2,
+            ci_range   = ci_filter_d(),
+            fold_range = fold_filter_d(),
+            scale_mode = input$scaleModeGender
+          ),
+          error = function(e) NULL
         )
+        shiny::validate(shiny::need(!is.null(result),
+          "Your CI and Fold thresholds left no diagnoses to plot. Try widening either slider."))
+        result
       }) |>
         shiny::bindCache(
           my_cfg$gp_idx, input$code_filter, input$gender_filter,
@@ -329,7 +361,9 @@ server <- function(input, output, session) {
   # Helper: render a plotly histogram with standard layout
   render_plotly_hist <- function(plot_fn, ...) {
     plotly::renderPlotly({
-      p <- plot_fn(...)
+      p <- tryCatch(plot_fn(...), error = function(e) NULL)
+      shiny::validate(shiny::need(!is.null(p),
+        "No data available for this view."))
       plotly::ggplotly(p) %>%
         plotly::layout(
           xaxis = list(showline = TRUE, linecolor = plotly::toRGB(COLOR_LINES), linewidth = 1),
@@ -341,7 +375,9 @@ server <- function(input, output, session) {
   # Helper: render a plotly scatter with standard hover layout
   render_plotly_scatter <- function(plot_fn, ...) {
     plotly::renderPlotly({
-      p <- plot_fn(...)
+      p <- tryCatch(plot_fn(...), error = function(e) NULL)
+      shiny::validate(shiny::need(!is.null(p),
+        "No data available for this view."))
       plotly::ggplotly(p, tooltip = c("text")) %>%
         plotly::layout(
           hoverlabel = list(
@@ -826,9 +862,15 @@ server <- function(input, output, session) {
     shiny::validate(shiny::need(length(codes) > 0, "Select at least one diagnosis code."))
 
     d <- customData()
-    forest_custom(d$gp, select_codes = codes, select_genders = c("F", "M", "Both"),
-                  name1 = d$comp$name1, name2 = d$comp$name2,
-                  scale_mode = input$scaleModeCustom)
+    result <- tryCatch(
+      forest_custom(d$gp, select_codes = codes, select_genders = c("F", "M", "Both"),
+                    name1 = d$comp$name1, name2 = d$comp$name2,
+                    scale_mode = input$scaleModeCustom),
+      error = function(e) NULL
+    )
+    shiny::validate(shiny::need(!is.null(result),
+      "No data to plot for the selected diagnoses."))
+    result
   })
 
   # ---------- Custom detail panel (right side) ----------
@@ -868,9 +910,15 @@ server <- function(input, output, session) {
       "Click a diagnosis on the heatmap or forest plot to see details."))
 
     d <- customData()
-    forest_detail_custom(d$meta, input$filterAgeCustom, input$filterGenderCustom,
-                         code, d$comp$name1, d$comp$name2,
-                         scale_mode = input$scaleModeCustom)
+    result <- tryCatch(
+      forest_detail_custom(d$meta, input$filterAgeCustom, input$filterGenderCustom,
+                           code, d$comp$name1, d$comp$name2,
+                           scale_mode = input$scaleModeCustom),
+      error = function(e) NULL
+    )
+    shiny::validate(shiny::need(!is.null(result),
+      "No data to plot for this diagnosis with the current Age and Gender selection."))
+    result
   })
 
   # Point difference plot for selected diagnosis
@@ -880,9 +928,15 @@ server <- function(input, output, session) {
       "Click a diagnosis to see prevalence values comparison."))
 
     d <- customData()
-    pointDiff1(d$meta, input$filterAgeCustom, input$filterGenderCustom,
-               code, d$comp$name1, d$comp$name2,
-               scale_mode = input$scaleModeCustom)
+    result <- tryCatch(
+      pointDiff1(d$meta, input$filterAgeCustom, input$filterGenderCustom,
+                 code, d$comp$name1, d$comp$name2,
+                 scale_mode = input$scaleModeCustom),
+      error = function(e) NULL
+    )
+    shiny::validate(shiny::need(!is.null(result),
+      "No data to plot for this diagnosis with the current Age and Gender selection."))
+    result
   })
 
   # ============================================================================
