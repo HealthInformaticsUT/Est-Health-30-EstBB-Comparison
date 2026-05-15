@@ -1,0 +1,756 @@
+---
+title: "EH30 vs EstBB Comparison Workflow"
+subtitle: "Reproducibility companion to *Comparison of the prevalence of all diagnosed diseases among Estonian Biobank participants against the general population*"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+    theme: simplex
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  message  = FALSE,
+  warning  = FALSE
+)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(readr)
+  library(knitr)
+})
+```
+
+# About this vignette
+
+This document accompanies the manuscript and its supplementary materials.
+It exists so that a reader of the paper can:
+
+1. **Understand the analysis pipeline** end to end without leaving this
+   page (Chapters 1 and 2 read as a self-contained methodology
+   supplement), and
+2. **Re-execute** the pipeline on a 30-code demo slice of the real source
+   data and verify that the published `comp_data/` outputs are
+   algorithmically reproducible (Chapters 3 and 4).
+
+The full analysis runs on restricted-access Estonian Biobank and
+Est-Health-30 source files that cannot be shipped publicly. To allow
+external verification anyway, a 30-code slice of those source files
+(`demo_comparison_script/demo_source_data/`) is included with **real
+patient counts preserved**: it is a row-set restriction of the original
+inputs, not a synthetic or down-sampled dataset. Running the demo
+therefore produces the same meta-analysis outputs you would get if you
+had access to the full inputs, restricted to those 30 ICD-10 categories.
+
+If you only want to look at the results, the live dashboard at
+<https://j6pp26-maarja-pajusalu.shinyapps.io/eh30-estbb-comparison/>
+(mirrored at omop-apps.cloud.ut.ee/ShinyApps/eh30-estbb-comparison)
+exposes all 1,028 categories interactively. No code execution required.
+
+## How to read this document
+
+- **Methodological reviewer** (interested in the meta-analysis math, the
+  Random-Effects to Fixed-Effect fallback, the Pass-Through rule, or the
+  confidence-interval construction): read Chapters 1 and 2 only.
+- **Reproducibility reviewer** (interested in running the pipeline and
+  comparing demo output to published `comp_data/`): read Chapters 3 and
+  4, refer back to 1-2 as needed.
+- **Reader with full access to the Estonian Biobank / Est-Health-30
+  source data**: the same workflow scripts run unchanged on real data;
+  see `demo_comparison_script/run_workflow.R` (defaults pinned to
+  `source_data/` -> `comp_data/`).
+
+## Repository layout (relevant parts)
+
+```
+EH30-EstBB-Clean/
+├── VIGNETTE.Rmd                       # this file
+├── VIGNETTE.html                      # knitted; readable on GitHub
+├── README.md                          # public-facing
+├── source_data/                       # NOT shipped (restricted inputs)
+├── comp_data/                         # 8 published meta-analysis files
+├── demo_comparison_script/
+│   ├── README.md                      # short reference for the workflow
+│   ├── run_workflow.R                 # REAL-data driver (overwrites comp_data/)
+│   ├── run_workflow_demo.R            # DEMO driver (safe; pinned paths)
+│   ├── validate_workflow.R            # numeric-equivalence gate
+│   ├── R/workflow_functions.R         # all pipeline functions
+│   ├── lookups/                       # ICD-10 chapter + category lookups
+│   ├── demo_source_data/              # 30-code slice of source_data/
+│   └── demo_comp_data/                # demo workflow outputs
+├── R/                                 # Shiny dashboard code
+├── global.R / ui.R / server.R         # dashboard
+└── scripts/                           # cache + deploy helpers
+```
+
+The dashboard reads only from `comp_data/`. It does not depend on
+`demo_source_data/`, `demo_comp_data/`, or the demo workflow files. The
+demo and the dashboard are independent artifacts that share methodology
+but not code paths.
+
+---
+
+# Chapter 1: Inputs and schema
+
+The pipeline consumes two kinds of source CSV per dataset: a **diagnosis
+file** (one row per ICD-10 category x year x gender x age-group, with
+patient counts and prevalences pre-computed against the dataset's
+relevant denominator) and a **patient birthyear file** (one row per
+year-of-birth x gender, used only for descriptive demographics and not
+by the meta-analysis itself).
+
+## The four datasets
+
+The analysis compares prevalences across four datasets, organized into
+four comparison pairs:
+
+| Code in filenames | Dataset                  | What it represents                                          |
+|-------------------|--------------------------|-------------------------------------------------------------|
+| `EH30`            | Est-Health-30            | 30% random sample of the Estonian general population        |
+| `GI`              | EstBB (full)             | Estonian Biobank, both recruitment waves combined           |
+| `GI_first`        | EstBB1                   | Estonian Biobank, recruitment wave 1 (GP-network, 2004-2010) |
+| `GI_second`       | EstBB2                   | Estonian Biobank, recruitment wave 2 (media, 2018-2019)     |
+
+The four comparison pairs are defined in
+`demo_comparison_script/run_workflow.R` as:
+
+| Pair base                  | Comparison                |
+|----------------------------|---------------------------|
+| `EH30d1_EstBBd2`           | Est-Health-30 vs EstBB    |
+| `EH30d1_EstBB1d2`          | Est-Health-30 vs EstBB1   |
+| `EH30d1_EstBB2d2`          | Est-Health-30 vs EstBB2   |
+| `EstBB1d1_EstBB2d2`        | EstBB1 vs EstBB2          |
+
+In each pair the file labelled `d1` is the reference dataset and `d2` is
+the contrast dataset, so the prevalence ratio is `prevalence_d2 /
+prevalence_d1`.
+
+## Diagnosis CSV schema
+
+Each diagnosis file (`*_diagnosis_gender_year_age_group.csv`) has 17
+columns. The first row of `EH30_diagnosis_gender_year_age_group.csv` is
+shown below for reference:
+
+```{r ch1-diag-sample, eval = TRUE}
+src <- read_csv("source_data/EH30_diagnosis_gender_year_age_group.csv",
+                n_max = 1, show_col_types = FALSE)
+str(src)
+```
+
+Column meanings:
+
+| Column            | Type    | Meaning                                                                                       |
+|-------------------|---------|-----------------------------------------------------------------------------------------------|
+| `parent0_code`    | chr     | ICD-10 chapter code (e.g. `F00-F99`)                                                          |
+| `parent0_name`    | chr     | Chapter name in Estonian                                                                      |
+| `parent1_code`    | chr     | ICD-10 block code (e.g. `F30-F39`); NA at chapter level                                       |
+| `parent1_name`    | chr     | Block name in Estonian                                                                        |
+| `parent2_code`    | chr     | ICD-10 category code (e.g. `F32`); NA at chapter and block rollups                            |
+| `parent2_name`    | chr     | Category name in Estonian                                                                     |
+| `year`            | int     | Calendar year of observation                                                                  |
+| `gender`          | chr     | `M` or `N` in source (Estonian: `N` = naine = female)                                         |
+| `age_group`       | chr     | 10-year age band, `"0-9"` through `"80+"`                                                     |
+| `diagnosis_count` | int     | Number of distinct diagnosis events                                                           |
+| `patient_count`   | int     | Number of unique patients with at least one such diagnosis in the stratum                     |
+| `prevalence`      | dbl     | `patient_count / denominator`                                                                 |
+| `denominator`     | int     | Number of patients in the stratum eligible for the diagnosis                                  |
+| `gender_EN`       | chr     | `M` or `F` (recoded from `gender` for the analysis)                                           |
+| `parent0_name_EN` | chr     | Chapter name in English                                                                       |
+| `short_name`      | chr     | Short English label for the chapter (used as axis labels)                                     |
+| `parent2_name_EN` | chr     | Category name in English                                                                      |
+
+Three rollup levels coexist in the same file:
+
+- **Chapter rows**: `parent0_code` set, `parent1_code` and `parent2_code`
+  both `NA`. One row per chapter x year x gender x age-group.
+- **Block rows**: `parent0_code` and `parent1_code` set, `parent2_code`
+  `NA`.
+- **Category rows**: all three of `parent0_code`, `parent1_code`,
+  `parent2_code` populated. This is the finest level and is the only
+  level the meta-analysis runs on.
+
+The meta-analysis pipeline filters to category rows only via
+`par2_data()`; chapter and block rollups in `comp_data/` are carried
+through unchanged from source.
+
+## Patient birthyear CSV schema
+
+Each patient birthyear file (`*_patient_birthyear_gender.csv`) has 3
+columns:
+
+```{r ch1-pb-sample, eval = TRUE}
+pb <- read_csv("source_data/EH30_patient_birthyear_gender.csv",
+               n_max = 1, show_col_types = FALSE)
+str(pb)
+```
+
+| Column   | Type | Meaning                              |
+|----------|------|--------------------------------------|
+| `gender` | chr  | `M` or `N` (raw source coding)        |
+| `year`   | int  | Year of birth                         |
+| `count`  | int  | Number of patients born in that year  |
+
+These files are used by the dashboard for the demographics tab. The
+meta-analysis does not read them; the demo workflow copies them through
+unchanged.
+
+## The demo slice
+
+The demo source CSVs in `demo_comparison_script/demo_source_data/` are
+produced by `build_demo_source_data.R` from the real source files. The
+filter keeps:
+
+- All chapter and block rollup rows for ICD-10 chapters F (Mental and
+  behavioural disorders) and I (Diseases of the circulatory system),
+  including their full real chapter and block totals;
+- All category rows whose `parent2_code` is one of the 30 selected
+  codes: the top 15 F-chapter and top 15 I-chapter codes by EH30
+  `patient_count`, restricted to codes present in all four diagnosis
+  files (so all four pairs run on demo data unchanged).
+
+The selected codes:
+
+- **F codes (15)**: F41, F32, F51, F33, F45, F10, F43, F06, F48, F52,
+  F01, F20, F07, F70, F40.
+- **I codes (15)**: I11, I10, I50, I48, I25, I49, I20, I84, I83, I70,
+  I69, I67, I63, I80, I13.
+
+Within those 30 codes, every numeric value (`patient_count`,
+`denominator`, `prevalence`) is byte-identical to the corresponding row
+in the real source file. The demo is a **row-set restriction**, not a
+value modification, so any meta-analysis result computed on the demo
+slice matches the corresponding row of the published `comp_data/` to
+within floating-point reproducibility.
+
+All other chapters (A, B, C, D, E, G, H, J, K, L, M, N, O, P, Q, R, V)
+are dropped from the demo source files entirely.
+
+---
+
+# Chapter 2: Pipeline math
+
+The analysis is a two-level random-effects meta-analysis of the log2
+prevalence ratio across years, age groups, and sexes. This chapter walks
+through every step.
+
+The full implementation lives in
+`demo_comparison_script/R/workflow_functions.R` and is sourced by both
+drivers. The functions are pure: each takes data frames and returns
+data frames; the only side effects are the explicit `write_csv` /
+`write.csv` calls inside `run_meta1` and `run_meta2`.
+
+## Overview: two cascading meta-analyses per pair
+
+For each comparison pair, the pipeline runs in three stages:
+
+1. **`enrich_source()`** adds English names and the `gender_EN`
+   recoding. Idempotent: if the columns already exist (as they do in the
+   shipped `source_data/`), input is returned unchanged.
+
+2. **`run_meta1()`** joins the two datasets at the
+   `(parent2_code, year, gender_EN, age_group)` stratum, computes a
+   per-stratum log2 PR with its standard error and 95% CI, then **pools
+   across years** within each `(parent2_code, gender_EN, age_group)`
+   cell via random-effects meta-analysis (Paule-Mandel tau^2 estimator).
+   Output: `{pair}_diff_meta.csv`.
+
+3. **`run_meta2()`** consumes the pooled `year == "Meta"` rows from
+   step 2 and runs two further pools:
+
+   - **Across age groups** within each `(parent2_code, gender_EN)` cell,
+     producing rows tagged `year == "MetaAgeCombined"`.
+   - **Across age groups AND sexes** within each `parent2_code`,
+     producing rows tagged `year == "MetaAgeGenderCombined"` (and
+     `gender_EN == "Both"`).
+
+   Output: `{pair}_diff_meta_genders_parent2.csv`.
+
+## Step 0: enrichment
+
+`enrich_source()` is a no-op on the shipped `source_data/` (all required
+columns are already present). It exists as a safety net for cases where
+source files are produced from an upstream extractor that does not emit
+the four enrichment columns. The function recodes `gender` (`N` -> `F`)
+and joins the two lookup tables in `demo_comparison_script/lookups/`:
+
+- `ICD10_chapters.csv`: `parent0_code -> parent0_name_EN + short_name`
+- `icd10_category_EN.csv`: `parent2_code -> parent2_name_EN`
+
+## Step 1: per-year log2 prevalence ratio
+
+For each stratum `(parent2_code, year, gender_EN, age_group)` shared by
+the two datasets being compared, the pipeline computes:
+
+$$
+\Delta = \log_2 \left( \frac{p_2}{p_1} \right)
+$$
+
+where $p_1$ and $p_2$ are the per-stratum prevalences in the reference
+(d1) and contrast (d2) datasets respectively. The standard error of
+$\Delta$ is computed from the binomial-proportion variance of each
+prevalence:
+
+$$
+\mathrm{SE}_{\ln}(\Delta) = \sqrt{ \frac{1 - p_1}{p_1 n_1} +
+                                  \frac{1 - p_2}{p_2 n_2} }
+$$
+
+and converted to the log2 scale via $\mathrm{SE}_{\log_2} =
+\mathrm{SE}_{\ln} / \ln(2)$. The 95% confidence interval is
+$\Delta \pm 1.96 \cdot \mathrm{SE}_{\log_2}$, and a z-statistic and
+two-sided p-value follow.
+
+This is implemented in `confidence_interval(p1, n1, p2, n2)` in
+`workflow_functions.R:82`. Strata with $n_1 \le 0$ or $n_2 \le 0$ are
+returned as `NA` and filtered out before pooling.
+
+## Step 2: random-effects pool across years (meta-analysis 1)
+
+For each cell `(parent2_code, gender_EN, age_group)`, the per-year log2
+PRs and their standard errors are passed to `meta::metagen()` as
+"studies", with year as the study label and Paule-Mandel
+(`method.tau = "PM"`) for the between-year variance estimator. The
+random-effects pooled estimate, its 95% CI, the z-statistic and
+two-sided p-value are written out alongside the per-year rows (the
+pooled row has `year == "Meta"`).
+
+A two-step fallback handles convergence issues:
+
+1. **Random-Effects (Paule-Mandel)** first. If it succeeds, the row is
+   tagged `meta_model_type == "Random-Effects"`.
+2. **Fixed-Effect fallback** if RE fails (e.g. zero between-year
+   variance under PM, or a numerical exception inside `metagen`). The
+   row is tagged `meta_model_type == "Fixed-Effect (Fallback)"`.
+3. If both fail, the cell is dropped from the output. This is rare; on
+   real data the dashboard shows zero rows lost this way for the
+   published `comp_data/`.
+
+This is implemented in `run_metagen_with_fallback()` in
+`workflow_functions.R:100`. The fallback is the documented methodology
+in the article; it is the reason the published `comp_data/` does not
+silently lose strata when between-year variance is zero.
+
+Cells with only one valid year (i.e. one "study") are dropped at this
+stage. This differs from meta-analysis 2 below, where a single-study
+cell is kept via Pass-Through.
+
+The pooled fold-difference column `fold_diff_nat` is `2 ^ TE.random`
+(natural prevalence ratio). The columns `fold_diff_reg` flips
+under-represented values to `1/fold_diff_nat` so they are always >= 1
+(used by the dashboard's regularized fold-diff visualisations).
+
+## Step 3: meta-analysis 2 (pool across ages, then across ages and sexes)
+
+Meta-analysis 2 takes the `year == "Meta"` rows from step 2 and pools
+them further.
+
+### Pool 1: across age groups, per gender
+
+For each `(parent2_code, gender_EN)` cell, age-pooled estimates are
+computed as a meta-analysis over the (up to 8) age-group strata using
+the same RE -> FE fallback as step 2. The age-group string is used as
+the study label.
+
+The output row carries `year == "MetaAgeCombined"` and the original
+`gender_EN`.
+
+### Pool 2: across age groups and sexes
+
+For each `parent2_code` cell, the meta-analysis pools across all
+combinations of age group and sex. The study label is `age_group_F` or
+`age_group_M`. The output row carries `year == "MetaAgeGenderCombined"`
+and `gender_EN == "Both"`. The historical Estonian-language label
+`gender == "Koos"` (Estonian for "Together") is preserved on these rows
+for compatibility with the dashboard's data display.
+
+### Pass-Through for single-study cells
+
+If a cell contains only one age group (Pool 1) or only one
+age-group-by-sex combination (Pool 2), `meta::metagen()` cannot run a
+meta-analysis. In that case the pipeline applies a **Pass-Through**:
+the single available log2 PR, CI, SE, z, and p-value are copied
+unchanged into the output, and the row is tagged
+`meta_model_type == "Pass-Through"`.
+
+This rule preserves rows that would otherwise be silently dropped. On
+real data, 192 `Pass-Through` rows appear in the published meta-analysis
+2 outputs; without this rule those 192 cells would be missing from the
+dashboard.
+
+The Pass-Through preserves the original CI from step 1 (per-year),
+which is wider than a synthetic single-study meta-analysis CI would be.
+This is the conservative choice and is the documented methodology in
+the article.
+
+## Threshold rationale
+
+The article uses a prevalence ratio of $\phi \ge 1.3$ (and its inverse
+$\phi \le 0.77 = 1/1.3$) as a pragmatic threshold for classifying a
+category as over- or under-represented in the biobank.
+
+This threshold is **not** the basis for statistical inference: every row
+in the published outputs carries a 95% CI and a two-sided p-value, and
+those are the columns to use when assessing whether a deviation is
+statistically distinguishable from parity. The $\phi = 1.3$ threshold
+is a separate **interpretive cutoff** used to summarise how many
+categories deviate substantively from population parity, not just
+statistically. The exact value of 1.3 is documented in the article as a
+pragmatic choice; the conclusions are robust to threshold shifts within
+a reasonable range, and the dashboard exposes a slider for users to
+explore alternative cutoffs.
+
+## Why `age_levels` excludes "0-9"
+
+The pipeline's `age_levels` vector is
+`c("10-19", "20-29", ..., "80+")`. The 0-9 age group is dropped before
+meta-analysis 1. The reason is the analysis focus on
+reproductive-age-and-above cohorts and the very thin EstBB membership
+in the 0-9 stratum: the biobank does not recruit minors, so EstBB
+prevalences in 0-9 are dominated by edge cases (records inherited from
+parental enrolment, retrospective records, etc.) that would distort the
+pooled estimate without informing it.
+
+This decision is taken in `workflow_functions.R:168-172` and is
+documented in the article methodology.
+
+---
+
+# Chapter 3: Demo run and expected results
+
+This chapter walks through running the cleaned pipeline against the
+30-code demo source slice and comparing the output to the published
+`comp_data/`.
+
+## Prerequisites
+
+- R >= 4.0
+- R packages: `dplyr`, `tidyr`, `purrr`, `meta`, `tibble`, `readr`. All
+  are CRAN packages; `meta` is the meta-analysis package by Schwarzer
+  et al.
+- A clone of this repository (no further data download required: the
+  30-code demo source CSVs are shipped under
+  `demo_comparison_script/demo_source_data/`).
+
+## Running the demo workflow
+
+From the repository root:
+
+```bash
+Rscript demo_comparison_script/run_workflow_demo.R
+```
+
+This driver has its source and output paths hard-coded to
+`demo_comparison_script/demo_source_data/` and
+`demo_comparison_script/demo_comp_data/` respectively. It also has a
+safety belt (`workflow_functions.R` source check) that refuses to run
+if the output path resolves to the canonical `comp_data/`. There is no
+way to accidentally overwrite the published outputs by running this
+driver with default settings.
+
+Expected console output (abbreviated):
+
+```
+Loading + enriching: EH30_diagnosis_gender_year_age_group.csv
+Loading + enriching: GI_diagnosis_gender_year_age_group.csv
+Loading + enriching: GI_diagnosis_gender_year_age_group_first.csv
+Loading + enriching: GI_diagnosis_gender_year_age_group_second.csv
+
+=== Running pair: EH30d1_EstBBd2 ===
+Meta-analysis 1 saved to: .../demo_comp_data/EH30d1_EstBBd2_diff_meta.csv
+Meta-analysis 2 saved to: .../demo_comp_data/EH30d1_EstBBd2_diff_meta_genders_parent2.csv
+
+=== Running pair: EH30d1_EstBB1d2 ===
+... (and so on for the other 3 pairs)
+
+All 4 pairs complete.
+```
+
+Total runtime on a modern laptop: under 30 seconds. The full real-data
+workflow runs in 5-15 minutes on the same hardware.
+
+## Files produced
+
+After the run, `demo_comparison_script/demo_comp_data/` contains 8
+files, two for each of the four comparison pairs:
+
+```
+EH30d1_EstBBd2_diff_meta.csv
+EH30d1_EstBBd2_diff_meta_genders_parent2.csv
+EH30d1_EstBB1d2_diff_meta.csv
+EH30d1_EstBB1d2_diff_meta_genders_parent2.csv
+EH30d1_EstBB2d2_diff_meta.csv
+EH30d1_EstBB2d2_diff_meta_genders_parent2.csv
+EstBB1d1_EstBB2d2_diff_meta.csv
+EstBB1d1_EstBB2d2_diff_meta_genders_parent2.csv
+```
+
+The schema of each output type is described in Chapter 4.
+
+## Expected results: three diagnostic categories
+
+The most direct way to verify reproducibility is to look at the pooled
+prevalence ratio for a few specific codes. The table below lists three
+categories that span the range of effects observed in the full
+analysis: a strongly over-represented code (F32 Major depressive
+disorder), a near-parity high-burden code (I10 Essential
+hypertension), and an under-represented severe code (I50 Heart
+failure). The columns are read directly from the published
+`comp_data/EH30d1_EstBBd2_diff_meta_genders_parent2.csv`:
+
+```{r ch3-expected, eval = TRUE}
+expected <- read_csv(
+  "comp_data/EH30d1_EstBBd2_diff_meta_genders_parent2.csv",
+  show_col_types = FALSE
+) %>%
+  filter(parent2_code %in% c("F32", "I10", "I50"),
+         year == "MetaAgeGenderCombined") %>%
+  transmute(
+    `ICD-10`          = parent2_code,
+    `Category`        = parent2_name_EN,
+    `log2(PR)`        = round(prevalence_diff, 4),
+    `95% CI (log2)`   = sprintf("[%.4f, %.4f]", ci_low, ci_high),
+    `PR (fold)`       = round(fold_diff_nat, 3),
+    `95% CI (fold)`   = sprintf("[%.3f, %.3f]",
+                                fold_ci_low_nat, fold_ci_high_nat),
+    `p-value`         = format.pval(p_value, digits = 2, eps = 1e-300),
+    `Model`           = meta_model_type
+  )
+kable(expected, align = "llrlrlrl")
+```
+
+Running the demo workflow and reading the same three rows from
+`demo_comparison_script/demo_comp_data/EH30d1_EstBBd2_diff_meta_genders_parent2.csv`
+should produce identical values to within floating-point precision (max
+absolute difference observed on validation: 1.87 x 10^-12). A reader
+who wants to verify quickly can do:
+
+```{r ch3-demo-check, eval = FALSE}
+# After running: Rscript demo_comparison_script/run_workflow_demo.R
+library(readr)
+library(dplyr)
+demo <- read_csv(
+  "demo_comparison_script/demo_comp_data/EH30d1_EstBBd2_diff_meta_genders_parent2.csv",
+  show_col_types = FALSE
+) %>%
+  filter(parent2_code %in% c("F32", "I10", "I50"),
+         year == "MetaAgeGenderCombined") %>%
+  select(parent2_code, prevalence_diff, ci_low, ci_high,
+         fold_diff_nat, p_value, meta_model_type)
+print(demo)
+```
+
+These three rows in the demo output should match the three rows in the
+table above. The hash-verifying check for the full file set is the
+validation script described next.
+
+## Numerical equivalence gate (full validation)
+
+To verify the entire pipeline against the published `comp_data/`, run:
+
+```bash
+Rscript demo_comparison_script/validate_workflow.R
+```
+
+This script runs the cleaned workflow against the real `source_data/`
+(it does **not** use the 30-code demo: it needs full inputs to compare
+against the published outputs end-to-end), writes its output to a
+temporary directory, and compares each of the 8 `*_diff_meta*.csv` files
+against the corresponding file in `comp_data/` cell by cell. The
+tolerance is 1e-10 absolute or relative; the maximum observed
+difference on the published v2.0 outputs is 1.87 x 10^-12 across all
+files.
+
+Strict byte-identity is **not** the validation target. The published
+`comp_data/` was produced with a different combination of R, BLAS, and
+`meta` package versions, and IEEE 754 dot products drift by 1 ulp under
+those changes. Numeric equivalence at 1e-10 is roughly six orders of
+magnitude tighter than any statistical interpretation depends on, so it
+is the correct gate for "algorithmically identical pipeline".
+
+Note that running `validate_workflow.R` requires the real
+`source_data/`, which is not shipped publicly. A reviewer with access
+to the restricted-data context can run it; an external reader without
+access can verify the three rows above against the demo output instead,
+which exercises the same code paths.
+
+---
+
+# Chapter 4: Reading outputs and exploring at full scale
+
+This chapter describes the schema of the two output file types and
+points readers to the live dashboard for full-scale interactive
+exploration.
+
+## File-naming convention
+
+Every output file is named `{pair_base}_{output_type}.csv` where the
+pair bases are listed in Chapter 1 and the output types are:
+
+| Suffix                            | Source                                            |
+|-----------------------------------|---------------------------------------------------|
+| `_diff_meta.csv`                  | `run_meta1()` (per-year rows + pooled-year rows)  |
+| `_diff_meta_genders_parent2.csv`  | `run_meta2()` (pooled across ages and ages+sexes) |
+
+`comp_data/` contains 8 files (2 outputs x 4 pairs). The demo workflow
+produces the same 8 files in `demo_comp_data/`, restricted to the 30
+demo codes plus the F and I chapter and block rollups.
+
+## Schema: `*_diff_meta.csv`
+
+This is the meta-analysis 1 output. One row per stratum, where stratum
+is either:
+
+- A specific year, written as the integer year as a string (e.g.
+  `"2012"` through `"2023"`); or
+- The pooled-across-years row, written as `year == "Meta"`.
+
+```{r ch4-meta1-cols, eval = TRUE}
+m1 <- read_csv("comp_data/EH30d1_EstBBd2_diff_meta.csv",
+               guess_max = Inf, show_col_types = FALSE)
+str(m1 %>% slice_head(n = 1))
+```
+
+The columns specific to this output (beyond the parent code / name
+columns and the stratum identifiers) are:
+
+| Column            | Meaning                                                            |
+|-------------------|--------------------------------------------------------------------|
+| `prevalence_diff` | log2 prevalence ratio (per-year row) or pooled log2 PR (Meta row)  |
+| `se`              | Standard error of `prevalence_diff` on the log2 scale              |
+| `ci_low`          | Lower bound of 95% CI on log2 scale                                |
+| `ci_high`         | Upper bound of 95% CI on log2 scale                                |
+| `z`               | z-statistic (= `prevalence_diff / se`)                             |
+| `p_value`         | Two-sided p-value from `z`                                         |
+| `sig`             | `"sig"` if 95% CI excludes 0, else `"nosig"`                       |
+| `fold_diff_nat`   | `2 ^ prevalence_diff` (natural prevalence ratio)                   |
+| `fold_diff_reg`   | `fold_diff_nat` if >= 1, else `1 / fold_diff_nat`                  |
+| `meta_model_type` | `"Random-Effects"` or `"Fixed-Effect (Fallback)"` (Meta rows only) |
+
+Per-year rows carry per-year quantities; the Meta row carries the
+pooled estimate. Reading the file with the dashboard's logic means
+filtering to either `year != "Meta"` (for the per-year forest plot) or
+`year == "Meta"` (for the pooled-by-age-and-sex view).
+
+## Schema: `*_diff_meta_genders_parent2.csv`
+
+This is the meta-analysis 2 output. One row per `(parent2_code,
+gender_EN, year)` combination where year is either `"MetaAgeCombined"`
+(pool across ages within a gender) or `"MetaAgeGenderCombined"` (pool
+across ages and sexes, `gender_EN == "Both"`).
+
+```{r ch4-meta2-cols, eval = TRUE}
+m2 <- read_csv("comp_data/EH30d1_EstBBd2_diff_meta_genders_parent2.csv",
+               guess_max = Inf, show_col_types = FALSE)
+str(m2 %>% slice_head(n = 1))
+```
+
+Most columns mirror meta-analysis 1. The differences:
+
+| Column              | Meaning                                                            |
+|---------------------|--------------------------------------------------------------------|
+| `fold_ci_low_nat`   | `2 ^ ci_low` (natural-scale CI lower bound)                        |
+| `fold_ci_high_nat`  | `2 ^ ci_high` (natural-scale CI upper bound)                       |
+| `ci_width_nat`      | `fold_ci_high_nat - fold_ci_low_nat`                               |
+| `meta_model_type`   | `"Random-Effects"`, `"Fixed-Effect (Fallback)"`, or `"Pass-Through"` |
+
+The `Pass-Through` value indicates a single-study cell where the
+underlying log2 PR, CI, SE, z, and p-value are copied unchanged from
+meta-analysis 1; no further pooling was performed. See Chapter 2 for
+why this rule is in place.
+
+The `gender_EN` column takes values `"F"`, `"M"`, or `"Both"`. The
+`gender` column on the `"Both"` rows is the historical Estonian-language
+label `"Koos"` (Estonian for "Together"), preserved for dashboard
+display compatibility.
+
+## Reading values across the four pairs
+
+The same `parent2_code` appears across all four output pairs. Reading
+the four files into a single long data frame is a one-step operation:
+
+```{r ch4-cross-pair, eval = TRUE}
+pairs <- c("EH30d1_EstBBd2",
+           "EH30d1_EstBB1d2",
+           "EH30d1_EstBB2d2",
+           "EstBB1d1_EstBB2d2")
+all_meta2 <- bind_rows(lapply(pairs, function(p) {
+  read_csv(file.path("comp_data",
+                     paste0(p, "_diff_meta_genders_parent2.csv")),
+           show_col_types = FALSE) %>%
+    mutate(pair = p, .before = 1)
+}))
+
+all_meta2 %>%
+  filter(parent2_code == "F32",
+         year == "MetaAgeGenderCombined") %>%
+  transmute(pair,
+            `PR (fold)`     = round(fold_diff_nat, 3),
+            `95% CI (fold)` = sprintf("[%.3f, %.3f]",
+                                      fold_ci_low_nat, fold_ci_high_nat),
+            `p-value`       = format.pval(p_value, digits = 2),
+            `Model`         = meta_model_type) %>%
+  kable()
+```
+
+This shows how F32 prevalence ratios shift across the recruitment waves:
+the wave-1 (EstBB1, GP-network 2004-2010) cohort and the wave-2 (EstBB2,
+media-recruited 2018-2019) cohort can be compared both to the
+population reference (Est-Health-30) and directly against each other.
+
+## Live dashboard
+
+For full-scale interactive exploration across all 1,028 ICD-10
+categories, all four comparison pairs, and per-year / per-age / per-sex
+drilldowns, use the deployed dashboard:
+
+- **Public mirror**:
+  <https://j6pp26-maarja-pajusalu.shinyapps.io/eh30-estbb-comparison/>
+- **University of Tartu host**:
+  <http://omop-apps.cloud.ut.ee/ShinyApps/eh30-estbb-comparison>
+
+The dashboard reads only from `comp_data/`. The code that generated
+those CSVs is exactly what this vignette describes. There is no other
+data path: what you see in the dashboard is what you would produce by
+running `Rscript demo_comparison_script/run_workflow.R` against the
+real source data.
+
+The dashboard source code is in this same repository under `global.R`,
+`ui.R`, `server.R`, and `R/`. The dashboard is not required to read or
+verify the analysis: every result it displays can be read directly from
+the `comp_data/*.csv` files using base R or the snippets in this
+chapter.
+
+---
+
+# Summary
+
+The reproducibility chain from inputs to published findings has three
+links:
+
+1. **Source CSVs** in `source_data/` (restricted; a 30-code slice with
+   real counts shipped in `demo_comparison_script/demo_source_data/`).
+2. **Workflow** in `demo_comparison_script/R/workflow_functions.R`,
+   invoked via `run_workflow.R` (real) or `run_workflow_demo.R`
+   (demo).
+3. **Outputs** in `comp_data/` (8 files; same schema as the demo
+   outputs in `demo_comp_data/`).
+
+The dashboard and the article supplementary tables read link 3 only. A
+reviewer who wants to check the math reads Chapter 2 of this vignette
+and inspects `workflow_functions.R`. A reviewer who wants to verify
+reproducibility runs `Rscript demo_comparison_script/run_workflow_demo.R`
+and compares against the three rows in Chapter 3's expected-results
+table.
+
+Code archive on Zenodo (citable, with DOI): see the **Code Availability**
+statement in the published article for the DOI corresponding to the v2.0
+tag of this repository.
+
+```{r session-info, eval = TRUE, echo = FALSE}
+cat("\nVignette built:", format(Sys.time()), "\n")
+sessionInfo()
+```

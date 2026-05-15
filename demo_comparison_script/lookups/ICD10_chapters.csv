@@ -1,0 +1,23 @@
+parent0_code,parent0_name_EN,short_name
+A00-B99,Certain infectious and parasitic diseases,Infectious diseases
+C00-D48,Neoplasms,Neoplasms
+D50-D89,Diseases of the blood and blood-forming organs and certain disorders involving the immune mechanism,Blood and immune system
+E00-E90,"Endocrine, nutritional and metabolic diseases",Endocrine and metabolic
+F00-F99,Mental and behavioural disorders,Mental health disorders
+G00-G99,Diseases of the nervous system,Nervous system
+H00-H59,Diseases of the eye and adnexa,Eye and adnexa
+H60-H95,Diseases of the ear and mastoid process,Ear and mastoid process
+I00-I99,Diseases of the circulatory system,Circulatory system
+J00-J99,Diseases of the respiratory system,Respiratory system
+K00-K93,Diseases of the digestive system,Digestive system
+L00-L99,Diseases of the skin and subcutaneous tissue,Skin and subcutaneous
+M00-M99,Diseases of the musculoskeletal system and connective tissue,Musculoskeletal and connective
+N00-N99,Diseases of the genitourinary system,Genitourinary system
+O00-O99,"Pregnancy, childbirth and the puerperium","Pregnancy, childbirth"
+P00-P96,Certain conditions originating in the perinatal period,—
+Q00-Q99,"Congenital malformations, deformations and chromosomal abnormalities",Congenital
+R00-R99,"Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified",Diagnostic - lab
+S00-T98,"Injury, poisoning and certain other consequences of external causes",Injuries
+V01-Y98,External causes of morbidity and mortality,—
+Z00-Z99,Factors influencing health status and contact with health services,Health service contacts
+U00-U99,Codes for special purposes,—
