@@ -37,3 +37,12 @@ rsconnect/
 # Editor / OS scratch
 *.swp
 *~
+
+# Heterogeneity sidecars — generated locally for completeness but NOT shipped
+# to GitHub (no reviewer asked for them; the article supplementary doesn't
+# document them). Decision recorded 2026-05-15.
+# Patterns broadened 2026-05-15 (#2) to catch any current OR future demo-output
+# subfolder name (e.g. `demo_comp_data/`, `KEEP_demo_comp_data/`, snapshot
+# folders); the `**` glob matches any depth under `demo_comparison_script/`.
+comp_data/*_heterogeneity.csv
+demo_comparison_script/**/*_heterogeneity.csv
