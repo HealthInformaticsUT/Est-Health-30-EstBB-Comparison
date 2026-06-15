@@ -208,7 +208,7 @@ server <- function(input, output, session) {
   render_detail_heatmap <- function(meta_data, name1, name2) {
     shiny::validate(
       shiny::need(!is.null(selectedCodes_sub()),
-        "Click on a Diagnosis Group from Heatmap to See the Details.")
+        "In panel (1), click on a diagnosis group and then on a diagnosis.")
     )
 
     sorting_method <- active_plot()
@@ -280,7 +280,7 @@ server <- function(input, output, session) {
 
   output$forest1 <- ggiraph::renderGirafe({
     shiny::validate(shiny::need(!is.null(selectedCodes_sub2()),
-      "Prevalence Ratios Across Years: Click on a diagnosis code from detailed, diagnosis-level heatmap."))
+      "Prevalence Ratios Across Years: In panel (1), click on a diagnosis group and then on a diagnosis."))
     result <- tryCatch(
       forest1(selectedDataset_meta(), selectedAgegroups(), selectedGen(),
         selectedCodes_sub2(), selectedNames()$name1, selectedNames()$name2,
@@ -294,7 +294,7 @@ server <- function(input, output, session) {
 
   output$pointDiff1 <- ggiraph::renderGirafe({
     shiny::validate(shiny::need(!is.null(selectedCodes_sub2()),
-      "Prevalence Values Across Years: Click on a diagnosis code from detailed, diagnosis-level heatmap."))
+      "Prevalence Values Across Years: In panel (1), click on a diagnosis group and then on a diagnosis."))
     result <- tryCatch(
       pointDiff1(selectedDataset_meta(), selectedAgegroups(), selectedGen(),
         selectedCodes_sub2(), selectedNames()$name1, selectedNames()$name2,

@@ -234,8 +234,12 @@ body <- shinydashboard::dashboardBody(
               # Heatmap plots
               shinydashboard::box(
                 width = 12,
-                title = "PR Values by Age and Gender in Diagnoses Groups",
+                title = "(1) PR Values by Age and Gender in Diagnoses Groups",
                 solidHeader = TRUE, status = "primary",
+                shiny::helpText(
+                  "In panel (1), click on a diagnosis group and then on a diagnosis.",
+                  "Scroll to panel (2) for the forest plot and yearly prevalence details."
+                ),
                 shiny::fluidRow(
                   shiny::column(width = 6, class = "responsive-col2",
                     shinycssloaders::withSpinner(ggiraph::girafeOutput("heatmap_meta_avg", width = "auto"),
@@ -253,7 +257,7 @@ body <- shinydashboard::dashboardBody(
               # Forest + Point Diff
               shinydashboard::box(
                 width = 12, solidHeader = TRUE, status = "primary",
-                title = "Detailed View: Prevalence Ratios and Prevalence Values across Years",
+                title = "(2) Detailed View: Prevalence Ratios and Prevalence Values across Years",
                 shiny::div(class = "info-icon",
                   shiny::tags$span("Methodology",
                     shiny::tags$i(id = "methodology", class = "glyphicon glyphicon-info-sign",
@@ -274,7 +278,7 @@ body <- shinydashboard::dashboardBody(
           shiny::tabPanel("Custom",
             shiny::fluidRow(
               shinydashboard::box(
-                title = "Filters", width = 12,
+                title = "Add or Remove Diagnosis to the View Manually", width = 12,
                 solidHeader = TRUE, status = "primary", class = "no-margin-box",
                 shiny::fluidRow(
                   shiny::column(width = 2,
