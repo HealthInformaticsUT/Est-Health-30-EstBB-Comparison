@@ -358,6 +358,15 @@ server <- function(input, output, session) {
       upload_gp_meta[[1]](), upload_gp_meta[[2]](), upload_gp_meta[[3]](), app_data$DALY)
   })
 
+  # Rows of one plot column: the diagnoses this comparison has (its PR not NA),
+  # in that comparison's own row order when the data carries it (<pr>_row)
+  column_data <- function(d, pr_col) {
+    d <- d %>% dplyr::filter(!is.na(.data[[pr_col]]))
+    row_col <- paste0(pr_col, "_row")
+    if (row_col %in% names(d)) d <- d %>% dplyr::arrange(.data[[row_col]])
+    d
+  }
+
   # Helper: render a plotly histogram with standard layout
   render_plotly_hist <- function(plot_fn, ...) {
     plotly::renderPlotly({
@@ -409,20 +418,21 @@ server <- function(input, output, session) {
       # Row 1: Histogram
       output[[paste0("p_histogram_", suffix)]] <- render_plotly_hist(
         create_pr_histogram,
-        plot_data = filtered_data_dd(),
+        plot_data = column_data(filtered_data_dd(), cfg$pr),
         pr_col = cfg$pr,
         left_label = DATASET_NAMES$d1,
         right_label = cfg$right,
         show_y_axis = is_first,
         show_x_axis = FALSE,
         y_label = if (is_first) "Count" else "",
+        y_max = 240,
         show_subtitle = is_first
       )
 
       # Row 2: Death burden scatter
       output[[paste0("p_death_", suffix)]] <- render_plotly_scatter(
         create_pr_scatter,
-        plot_data = filtered_data_dd(),
+        plot_data = column_data(filtered_data_dd(), cfg$pr),
         pr_col = cfg$pr,
         p_col = cfg$p,
         burden_col = "YLL2021norm",
@@ -435,7 +445,7 @@ server <- function(input, output, session) {
       x_lab <- paste0("prev_", cfg$right, " / prev_", DATASET_NAMES$d1)
       output[[paste0("p_disability_", suffix)]] <- render_plotly_scatter(
         create_pr_scatter,
-        plot_data = filtered_data_dd(),
+        plot_data = column_data(filtered_data_dd(), cfg$pr),
         pr_col = cfg$pr,
         p_col = cfg$p,
         burden_col = "YLD2021norm",
@@ -479,14 +489,14 @@ server <- function(input, output, session) {
 
           output[[output_id]] <- render_plotly_hist(
             create_pr_histogram,
-            plot_data = filtered_data_dd_gen() %>% dplyr::filter(gender_EN == my_gender),
+            plot_data = column_data(filtered_data_dd_gen(), my_cfg$pr) %>% dplyr::filter(gender_EN == my_gender),
             pr_col = my_cfg$pr,
             left_label = DATASET_NAMES$d1,
             right_label = my_cfg$right,
             show_y_axis = my_is_first,
             show_x_axis = is_bottom,
             y_label = if (my_is_first) (if (my_gender == "M") "MALES" else "FEMALES") else "",
-            y_max = 240,
+            y_max = 300,
             x_label = x_lab,
             show_subtitle = (my_is_first && my_gender == "M"),
             show_border = TRUE

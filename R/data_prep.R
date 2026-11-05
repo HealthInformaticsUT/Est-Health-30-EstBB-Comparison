@@ -24,6 +24,11 @@ topData <- function(inputData) {
 
 #' Prepare histogram data by joining 3 comparisons + DALY
 #' Produces the wide-format data needed for the 3x3 histogram grid.
+#' full_join keeps every diagnosis of every comparison: a diagnosis missing
+#' from one comparison is NA in that column only. Each plot column then uses
+#' the rows where its own PR is present, in its own file order (the *_row
+#' columns), so the jittered burden points are the same as for that
+#' comparison alone (see column_data() in server.R).
 #'
 #' @param gp_meta1 Gender/parent2 data for comparison 1 (EH30 vs EstBB)
 #' @param gp_meta2 Gender/parent2 data for comparison 2 (EH30 vs EstBB1)
@@ -34,15 +39,18 @@ prepare_histogram_data <- function(gp_meta1, gp_meta2, gp_meta3, DALY) {
   join_cols <- c("parent0_code", "parent2_code", "parent2_name_EN", "gender_EN")
 
   d <- gp_meta2 %>%
-    dplyr::select(dplyr::all_of(join_cols), p_vs_bb1 = prevalence_diff, p_vs_bb1_p = p_value) %>%
-    dplyr::left_join(
+    dplyr::mutate(p_vs_bb1_row = dplyr::row_number()) %>%
+    dplyr::select(dplyr::all_of(join_cols), p_vs_bb1 = prevalence_diff, p_vs_bb1_p = p_value, p_vs_bb1_row) %>%
+    dplyr::full_join(
       gp_meta3 %>%
-        dplyr::select(dplyr::all_of(join_cols), p_vs_bb2 = prevalence_diff, p_vs_bb2_p = p_value),
+        dplyr::mutate(p_vs_bb2_row = dplyr::row_number()) %>%
+        dplyr::select(dplyr::all_of(join_cols), p_vs_bb2 = prevalence_diff, p_vs_bb2_p = p_value, p_vs_bb2_row),
       by = join_cols
     ) %>%
-    dplyr::left_join(
+    dplyr::full_join(
       gp_meta1 %>%
-        dplyr::select(dplyr::all_of(join_cols), p_vs_bb = prevalence_diff, p_vs_bb_p = p_value),
+        dplyr::mutate(p_vs_bb_row = dplyr::row_number()) %>%
+        dplyr::select(dplyr::all_of(join_cols), p_vs_bb = prevalence_diff, p_vs_bb_p = p_value, p_vs_bb_row),
       by = join_cols
     )
 
@@ -57,7 +65,7 @@ prepare_histogram_data <- function(gp_meta1, gp_meta2, gp_meta3, DALY) {
 }
 
 #' Prepare gender-stratified histogram data
-#' Same join but keeps M/F genders (no DALY needed).
+#' Same full join but keeps M/F genders (no DALY needed).
 #'
 #' @param gp_meta1 Gender/parent2 data for comparison 1
 #' @param gp_meta2 Gender/parent2 data for comparison 2
@@ -69,13 +77,13 @@ prepare_histogram_data_gender <- function(gp_meta1, gp_meta2, gp_meta3) {
   gp_meta2 %>%
     dplyr::filter(gender_EN %in% c("M", "F")) %>%
     dplyr::select(dplyr::all_of(join_cols), p_vs_bb1 = prevalence_diff) %>%
-    dplyr::left_join(
+    dplyr::full_join(
       gp_meta3 %>%
         dplyr::filter(gender_EN %in% c("M", "F")) %>%
         dplyr::select(dplyr::all_of(join_cols), p_vs_bb2 = prevalence_diff),
       by = join_cols
     ) %>%
-    dplyr::left_join(
+    dplyr::full_join(
       gp_meta1 %>%
         dplyr::filter(gender_EN %in% c("M", "F")) %>%
         dplyr::select(dplyr::all_of(join_cols), p_vs_bb = prevalence_diff),
