@@ -460,6 +460,13 @@ body <- shinydashboard::dashboardBody(
           solidHeader = TRUE, status = "info", class = "no-margin-box",
           shiny::div(style = "padding: 10px;",
             shiny::tags$h3(shiny::tags$b("Abstract")),
+            shiny::tags$p(shiny::tags$em(
+              "This summary follows the preprint (medRxiv, 2026, ",
+              shiny::tags$a(href = "https://doi.org/10.64898/2026.02.05.26345634",
+                            target = "_blank", .noWS = "outside",
+                            "https://doi.org/10.64898/2026.02.05.26345634"),
+              "). It will be updated when the peer-reviewed article is published."
+            )),
             shiny::tags$hr(),
             shiny::fluidRow(
               shiny::column(width = 6,
