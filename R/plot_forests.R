@@ -147,7 +147,7 @@ forest2_parent2 <- function(data, gender_select, code_select = NULL,
     ) %>%
     dplyr::mutate(
       parent2_label = paste(parent2_code,
-                            stringr::str_trunc(parent2_name_EN, width = 40, side = "right"),
+                            stringr::str_trunc(short_icd_name(parent2_name_EN), width = 40, side = "right"),
                             sep = ", "),
       parent2_code_ordered = factor(parent2_code, levels = rev(sort(unique(parent2_code))))
     )
@@ -362,7 +362,7 @@ forest_custom <- function(data, select_codes, select_genders, name1, name2, scal
     dplyr::filter(gender_EN %in% select_genders) %>%
     dplyr::mutate(
       parent2_label = paste(parent2_code,
-                            stringr::str_trunc(parent2_name_EN, width = 40, side = "right"),
+                            stringr::str_trunc(short_icd_name(parent2_name_EN), width = 40, side = "right"),
                             sep = ", "),
       parent2_code_ordered = factor(parent2_code, levels = sort(unique(parent2_code)))
     )

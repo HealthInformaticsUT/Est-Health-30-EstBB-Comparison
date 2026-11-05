@@ -83,3 +83,10 @@ prepare_histogram_data_gender <- function(gp_meta1, gp_meta2, gp_meta3) {
     ) %>%
     dplyr::filter(!(parent0_code %in% EXCLUDED_CHAPTERS))
 }
+
+# Shorter row labels for the heatmaps: the WHO titles of F10-F19 all start with
+# "Mental and behavioural disorders due to", which would truncate to the same
+# text. The ICD-10 code stays in front of every label.
+short_icd_name <- function(x) {
+  sub("^Mental and behavioural disorders due to ", "Due to ", x)
+}

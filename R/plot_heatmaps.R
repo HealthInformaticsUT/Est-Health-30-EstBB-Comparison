@@ -156,7 +156,7 @@ heatmap_meta_alph <- function(dataIn, select_age, select_gender, select_code, na
   data$parent2_code <- factor(data$parent2_code, levels = rev(sort(unique(data$parent2_code))))
   data$parent2_label_alph <- paste(
     data$parent2_code,
-    stringr::str_trunc(data$parent2_name_EN, width = 40, side = "right"),
+    stringr::str_trunc(short_icd_name(data$parent2_name_EN), width = 40, side = "right"),
     sep = ", "
   )
   data$parent2_label_alph <- factor(data$parent2_label_alph,
@@ -277,7 +277,7 @@ heatmap_meta_avgDet <- function(dataIn, select_age, select_gender, select_code, 
   data$parent2_code <- factor(data$parent2_code, levels = rev(sort(unique(data$parent2_code))))
   data$parent2_label_alph <- paste(
     data$parent2_code,
-    stringr::str_trunc(data$parent2_name_EN, width = 40, side = "right"),
+    stringr::str_trunc(short_icd_name(data$parent2_name_EN), width = 40, side = "right"),
     sep = ", "
   )
   data$parent2_label_alph <- factor(data$parent2_label_alph,
@@ -388,7 +388,7 @@ heatmap_custom <- function(dataIn, select_age, select_gender, select_codes, name
   # Y-axis label: "code, name (truncated)"
   data$parent2_label <- paste(
     data$parent2_code,
-    stringr::str_trunc(data$parent2_name_EN, width = 40, side = "right"),
+    stringr::str_trunc(short_icd_name(data$parent2_name_EN), width = 40, side = "right"),
     sep = ", "
   )
   # Alphabetical sort: A at top, Z at bottom
